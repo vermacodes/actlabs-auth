@@ -17,10 +17,16 @@ func NewAuthRepository() entity.AuthRepository {
 }
 
 func getServiceClient() *aztables.ServiceClient {
-	if entity.SasToken == "" || entity.StorageAccountName == "" {
-		slog.Error("Error ->", errors.New("sas token and storage account name must be set before the application starts"))
-		panic("sas token and storage account name must be set before the application starts")
+	if entity.SasToken == "" {
+		slog.Error("Error ->", errors.New("sas token must be set before the application starts"))
+		panic("sas tokenmust be set before the application starts")
 	}
+
+	if entity.StorageAccountName == "" {
+		slog.Error("Error ->", errors.New("storage account name must be set before the application starts"))
+		panic("storage account name must be set before the application starts")
+	}
+
 	SasUrl := "https://" + entity.StorageAccountName + ".table.core.windows.net/" + entity.SasToken
 
 	serviceClient, err := aztables.NewServiceClientFromConnectionString(SasUrl, nil)
