@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"github.com/Azure/azure-sdk-for-go/sdk/data/aztables"
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,15 +9,19 @@ import (
 var SasToken string
 var StorageAccountName string
 
-type Auth struct {
+type UserRole struct {
 	UserPrincipal string   `json:"userPrincipal"`
 	Roles         []string `json:"roles"`
 }
 
+// For some reason, I am not able to add Roles as a slice of strings to the table.
+// So, I am converting the slice to a string and then converting it back to a slice.
+// This is not the best way to do it, but it works for now.
 type RoleRecord struct {
-	Entity        aztables.Entity
-	UserPrincipal string
-	Roles         []string
+	PartitionKey  string `json:"PartitionKey"`
+	RowKey        string `json:"RowKey"`
+	UserPrincipal string `json:"UserPrincipal"`
+	Roles         string `json:"Roles"`
 }
 
 type AuthService interface {

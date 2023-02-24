@@ -2,6 +2,7 @@ package repository
 
 import (
 	"actlabs-auth/entity"
+	"actlabs-auth/helper"
 	"context"
 	"encoding/json"
 	"errors"
@@ -29,7 +30,7 @@ func getServiceClient() *aztables.ServiceClient {
 
 	SasUrl := "https://" + entity.StorageAccountName + ".table.core.windows.net/" + entity.SasToken
 
-	serviceClient, err := aztables.NewServiceClientFromConnectionString(SasUrl, nil)
+	serviceClient, err := aztables.NewServiceClientWithNoCredential(SasUrl, nil)
 	if err != nil {
 		slog.Error("Error creating service client: ", err)
 	}
@@ -40,11 +41,13 @@ func getServiceClient() *aztables.ServiceClient {
 func (r *AuthRepository) GetRoles(userPrincipal string) ([]string, error) {
 	roles := []string{}
 	serviceClient := getServiceClient().NewClient("Roles")
-	principalRecord, err := serviceClient.GetEntity(context.Background(), "actlabs", userPrincipal, nil)
+	principalRecord, err := serviceClient.GetEntity(context.TODO(), "actlabs", userPrincipal, nil)
 	if err != nil {
 		slog.Error("Error getting entity: ", err)
 		return roles, err
 	}
+
+	slog.Info("principalRecord: ", string(principalRecord.Value))
 
 	roleRecord := entity.RoleRecord{}
 	if err := json.Unmarshal(principalRecord.Value, &roleRecord); err != nil {
@@ -52,13 +55,13 @@ func (r *AuthRepository) GetRoles(userPrincipal string) ([]string, error) {
 		return roles, err
 	}
 
-	return roleRecord.Roles, nil
+	return helper.StringToSlice(roleRecord.Roles), nil
 }
 
 // Use this function to complete delete the record for UserPricipal.
 func (r *AuthRepository) DeleteRole(userPrincipal string) error {
 	serviceClient := getServiceClient().NewClient("Roles")
-	_, err := serviceClient.DeleteEntity(context.Background(), "actlabs", userPrincipal, nil)
+	_, err := serviceClient.DeleteEntity(context.TODO(), "actlabs", userPrincipal, nil)
 	if err != nil {
 		slog.Error("Error deleting entity: ", err)
 	}
@@ -68,12 +71,10 @@ func (r *AuthRepository) DeleteRole(userPrincipal string) error {
 func (r *AuthRepository) AddRole(userPrincipal string, roles []string) error {
 	serviceClient := getServiceClient().NewClient("Roles")
 	principalRecord := entity.RoleRecord{
-		Entity: aztables.Entity{
-			PartitionKey: "actlabs",
-			RowKey:       userPrincipal,
-		},
+		PartitionKey:  "actlabs",
+		RowKey:        userPrincipal,
 		UserPrincipal: userPrincipal,
-		Roles:         roles,
+		Roles:         helper.SliceToString(roles),
 	}
 
 	marshalledPrincipalRecord, err := json.Marshal(principalRecord)
@@ -82,7 +83,9 @@ func (r *AuthRepository) AddRole(userPrincipal string, roles []string) error {
 		return err
 	}
 
-	_, err = serviceClient.AddEntity(context.Background(), marshalledPrincipalRecord, nil)
+	slog.Info("Adding entity: " + string(marshalledPrincipalRecord))
+
+	_, err = serviceClient.UpsertEntity(context.TODO(), marshalledPrincipalRecord, nil)
 	if err != nil {
 		slog.Error("Error adding entity: ", err)
 		return err
