@@ -81,7 +81,7 @@ func AdminRequired(authService entity.AuthService) gin.HandlerFunc {
 		}
 
 		// Check if the calling user has the admin role
-		if !helper.Contains(roles, "admin") {
+		if !helper.Contains(roles.Roles, "admin") {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user is not an admin"})
 			return
 		}
@@ -121,7 +121,7 @@ func MentorRequired(authService entity.AuthService) gin.HandlerFunc {
 		}
 
 		// Check if the calling user has the mentor role
-		if !helper.Contains(roles, "mentor") {
+		if !helper.Contains(roles.Roles, "mentor") {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user is not an mentor"})
 			return
 		}

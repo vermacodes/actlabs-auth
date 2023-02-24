@@ -9,7 +9,7 @@ import (
 var SasToken string
 var StorageAccountName string
 
-type UserRole struct {
+type Roles struct {
 	UserPrincipal string   `json:"userPrincipal"`
 	Roles         []string `json:"roles"`
 }
@@ -26,7 +26,7 @@ type RoleRecord struct {
 
 type AuthService interface {
 	// Get Roles
-	GetRoles(userPrincipal string) ([]string, error)
+	GetRoles(userPrincipal string) (Roles, error)
 	DeleteRole(userPrincipal string, role string) error
 	AddRole(userPrincipal string, role string) error
 }
