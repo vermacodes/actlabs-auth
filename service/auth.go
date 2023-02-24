@@ -17,13 +17,19 @@ func NewAuthService(authRepository entity.AuthRepository) entity.AuthService {
 	}
 }
 
-func (s *AuthService) GetRoles(userPrincipal string) ([]string, error) {
+func (s *AuthService) GetRoles(userPrincipal string) (entity.Roles, error) {
 	slog.Info("Getting roles for user: ", userPrincipal)
 	roles, err := s.authRepository.GetRoles(userPrincipal)
 	if err != nil {
 		slog.Error("Error getting roles: ", err)
 	}
-	return roles, err
+
+	// Add the roles to the Roles object.
+	rolesObj := entity.Roles{
+		UserPrincipal: userPrincipal,
+		Roles:         roles,
+	}
+	return rolesObj, err
 }
 
 func (s *AuthService) DeleteRole(userPrincipal string, role string) error {
@@ -46,10 +52,13 @@ func (s *AuthService) DeleteRole(userPrincipal string, role string) error {
 func (s *AuthService) AddRole(userPrincipal string, role string) error {
 	slog.Info("Adding role: ", role, " for user: ", userPrincipal)
 
-	roles, err := s.GetRoles(userPrincipal)
+	roles := []string{}
+
+	rolesObj, err := s.GetRoles(userPrincipal)
 	if err != nil {
 		slog.Error("Error getting roles: ", err)
-		roles = []string{} // If there is an error, we want to add the role
+	} else {
+		roles = rolesObj.Roles
 	}
 
 	if helper.Contains(roles, role) {
