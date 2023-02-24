@@ -16,14 +16,16 @@ func NewAuthHandler(r *gin.RouterGroup, authService entity.AuthService) {
 		authService: authService,
 	}
 
-	r.GET("/status", handler.Status)
 	r.GET("/roles/:userPrincipal", handler.GetRoles)
-	r.POST("/roles/:userPrincipal/:role", handler.AddRole)
-	r.DELETE("/roles/:userPrincipal/:role", handler.DeleteRole)
 }
 
-func (h *AuthHandler) Status(c *gin.Context) {
-	c.Status(http.StatusOK)
+func NewAdminAuthHandler(r *gin.RouterGroup, authService entity.AuthService) {
+	handler := &AuthHandler{
+		authService: authService,
+	}
+
+	r.POST("/roles/:userPrincipal/:role", handler.AddRole)
+	r.DELETE("/roles/:userPrincipal/:role", handler.DeleteRole)
 }
 
 func (h *AuthHandler) GetRoles(c *gin.Context) {

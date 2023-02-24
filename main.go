@@ -27,7 +27,7 @@ func main() {
 		AddSource: true,
 	}
 
-	slog.SetDefault(slog.New(opts.NewJSONHandler(os.Stderr)))
+	slog.SetDefault(slog.New(opts.NewTextHandler(os.Stderr)))
 
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
@@ -43,6 +43,14 @@ func main() {
 
 	authService := service.NewAuthService(repository.NewAuthRepository())
 	handler.NewAuthHandler(authRouter, authService)
+
+	adminAuthRouter := authRouter.Group("/")
+	adminAuthRouter.Use(middleware.AdminRequired(authService))
+	handler.NewAdminAuthHandler(adminAuthRouter, authService)
+
+	// mentorAuthRouter := authRouter.Group("/")
+	// mentorAuthRouter.Use(middleware.AdminRequired(authService))
+	// handler.NewAuthHandler(mentorAuthRouter, authService)
 
 	router.Run()
 }

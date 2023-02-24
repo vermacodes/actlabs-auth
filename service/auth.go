@@ -2,6 +2,7 @@ package service
 
 import (
 	"actlabs-auth/entity"
+	"actlabs-auth/helper"
 
 	"golang.org/x/exp/slog"
 )
@@ -33,7 +34,7 @@ func (s *AuthService) DeleteRole(userPrincipal string, role string) error {
 		slog.Error("Error getting roles: ", err)
 		return err
 	}
-	remove(roles, role)
+	roles = remove(roles, role)
 	if len(roles) == 0 {
 		return s.authRepository.DeleteRole(userPrincipal)
 	}
@@ -49,6 +50,11 @@ func (s *AuthService) AddRole(userPrincipal string, role string) error {
 	if err != nil {
 		slog.Error("Error getting roles: ", err)
 		roles = []string{} // If there is an error, we want to add the role
+	}
+
+	if helper.Contains(roles, role) {
+		slog.Info("Role already exists: ", role)
+		return nil
 	}
 
 	roles = append(roles, role)

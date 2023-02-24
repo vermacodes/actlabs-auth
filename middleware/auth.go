@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"actlabs-auth/entity"
+	"actlabs-auth/helper"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -41,41 +43,128 @@ func AuthRequired() gin.HandlerFunc {
 	}
 }
 
+func AdminRequired(authService entity.AuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		slog.Info("Middleware: AdminRequired")
+
+		// Get the auth token from the request header
+		authToken := c.GetHeader("Authorization")
+
+		// Remove Bearer from the authToken
+		authToken = strings.Split(authToken, "Bearer ")[1]
+
+		// Ensure that the token is issued by AAD.
+		isAADToken, err := ensureAADIssuer(authToken)
+		if err != nil || !isAADToken {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+
+		callingUserPrincipal, err := getUserPrincipalFromMSALAuthToken(authToken)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Allow all authenticated users to add 'user' role.
+		role := c.Param("role")
+		if role == "user" && c.Request.Method == "POST" {
+			c.Next()
+			return
+		}
+
+		// Get the roles for the calling user
+		roles, err := authService.GetRoles(callingUserPrincipal)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Check if the calling user has the admin role
+		if !helper.Contains(roles, "admin") {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user is not an admin"})
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func MentorRequired(authService entity.AuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		slog.Info("Middleware: MentorRequired")
+
+		// Get the auth token from the request header
+		authToken := c.GetHeader("Authorization")
+
+		// Remove Bearer from the authToken
+		authToken = strings.Split(authToken, "Bearer ")[1]
+
+		// Ensure that the token is issued by AAD.
+		isAADToken, err := ensureAADIssuer(authToken)
+		if err != nil || !isAADToken {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+
+		callingUserPrincipal, err := getUserPrincipalFromMSALAuthToken(authToken)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Get the roles for the calling user
+		roles, err := authService.GetRoles(callingUserPrincipal)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Check if the calling user has the mentor role
+		if !helper.Contains(roles, "mentor") {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user is not an mentor"})
+			return
+		}
+
+		c.Next()
+	}
+}
+
 // Helper Functions.
 
 // Get user principal name from MSAL auth token.
-// func getUserPrincipalFromMSALAuthToken(token string) (string, error) {
+func getUserPrincipalFromMSALAuthToken(token string) (string, error) {
 
-// 	// Split the token into its parts
-// 	tokenParts := strings.Split(token, ".")
-// 	if len(tokenParts) < 2 {
-// 		println("invalid token format")
-// 		return "", errors.New("invalid token format")
-// 	}
+	// Split the token into its parts
+	tokenParts := strings.Split(token, ".")
+	if len(tokenParts) < 2 {
+		println("invalid token format")
+		return "", errors.New("invalid token format")
+	}
 
-// 	// Decode the token
-// 	decodedToken, err := base64.StdEncoding.DecodeString(tokenParts[1] + strings.Repeat("=", (4-len(tokenParts[1])%4)%4))
-// 	if err != nil {
-// 		println("not able to decode token -> ", err.Error())
-// 		return "", err
-// 	}
+	// Decode the token
+	decodedToken, err := base64.StdEncoding.DecodeString(tokenParts[1] + strings.Repeat("=", (4-len(tokenParts[1])%4)%4))
+	if err != nil {
+		println("not able to decode token -> ", err.Error())
+		return "", err
+	}
 
-// 	// Extract the user principal name from the decoded token
-// 	var tokenJSON map[string]interface{}
-// 	err = json.Unmarshal(decodedToken, &tokenJSON)
-// 	if err != nil {
-// 		println("not able to unmarshal token -> ", err.Error())
-// 		return "", err
-// 	}
+	// Extract the user principal name from the decoded token
+	var tokenJSON map[string]interface{}
+	err = json.Unmarshal(decodedToken, &tokenJSON)
+	if err != nil {
+		println("not able to unmarshal token -> ", err.Error())
+		return "", err
+	}
 
-// 	userPrincipal, ok := tokenJSON["upn"].(string)
-// 	if !ok {
-// 		println("user principal name not found in token")
-// 		return "", errors.New("user principal name not found in token")
-// 	}
+	userPrincipal, ok := tokenJSON["upn"].(string)
+	if !ok {
+		println("user principal name not found in token")
+		return "", errors.New("user principal name not found in token")
+	}
 
-// 	return userPrincipal, nil
-// }
+	return userPrincipal, nil
+}
 
 // Ensure that the token is issued by AAD.
 func ensureAADIssuer(tokenString string) (bool, error) {
