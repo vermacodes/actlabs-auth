@@ -32,6 +32,15 @@ func (s *AuthService) GetRoles(userPrincipal string) (entity.Roles, error) {
 	return rolesObj, err
 }
 
+func (s *AuthService) GetAllRoles() ([]entity.Roles, error) {
+	slog.Info("Getting all roles")
+	roles, err := s.authRepository.GetAllRoles()
+	if err != nil {
+		slog.Error("Error getting roles: ", err)
+	}
+	return roles, err
+}
+
 func (s *AuthService) DeleteRole(userPrincipal string, role string) error {
 	slog.Info("Deleting role: ", role, " for user: ", userPrincipal)
 

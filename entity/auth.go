@@ -27,6 +27,7 @@ type RoleRecord struct {
 type AuthService interface {
 	// Get Roles
 	GetRoles(userPrincipal string) (Roles, error)
+	GetAllRoles() ([]Roles, error)
 	DeleteRole(userPrincipal string, role string) error
 	AddRole(userPrincipal string, role string) error
 }
@@ -34,6 +35,7 @@ type AuthService interface {
 type AuthHandler interface {
 	// Get Roles
 	GetRoles(c *gin.Context)
+	GetAllRoles(c *gin.Context)
 	DeleteRole(c *gin.Context)
 	AddRole(c *gin.Context)
 }
@@ -41,6 +43,7 @@ type AuthHandler interface {
 type AuthRepository interface {
 	// Get Roles
 	GetRoles(userPrincipal string) ([]string, error)
+	GetAllRoles() ([]Roles, error)
 
 	// This method is used to delete the record for UserPricipal from the table.
 	// This is used only when the last role is removed from the user.

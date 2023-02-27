@@ -58,6 +58,37 @@ func (r *AuthRepository) GetRoles(userPrincipal string) ([]string, error) {
 	return helper.StringToSlice(roleRecord.Roles), nil
 }
 
+func (r *AuthRepository) GetAllRoles() ([]entity.Roles, error) {
+	roles := []entity.Roles{}
+	role := entity.Roles{}
+
+	serviceClient := getServiceClient().NewClient("Roles")
+
+	pager := serviceClient.NewListEntitiesPager(nil)
+	for pager.More() {
+		response, err := pager.NextPage(context.Background())
+		if err != nil {
+			slog.Error("Error getting entities: ", err)
+			return roles, err
+		}
+
+		for _, entity := range response.Entities {
+			var myEntity aztables.EDMEntity
+			if err := json.Unmarshal(entity, &myEntity); err != nil {
+				slog.Error("Error unmarshalling principal record: ", err)
+				return roles, err
+			}
+
+			role.UserPrincipal = myEntity.Properties["UserPrincipal"].(string)
+			role.Roles = helper.StringToSlice(myEntity.Properties["Roles"].(string))
+
+			roles = append(roles, role)
+		}
+	}
+
+	return roles, nil
+}
+
 // Use this function to complete delete the record for UserPricipal.
 func (r *AuthRepository) DeleteRole(userPrincipal string) error {
 	serviceClient := getServiceClient().NewClient("Roles")
