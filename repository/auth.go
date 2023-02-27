@@ -47,8 +47,6 @@ func (r *AuthRepository) GetRoles(userPrincipal string) ([]string, error) {
 		return roles, err
 	}
 
-	slog.Info("principalRecord: ", string(principalRecord.Value))
-
 	roleRecord := entity.RoleRecord{}
 	if err := json.Unmarshal(principalRecord.Value, &roleRecord); err != nil {
 		slog.Error("Error unmarshalling principal record: ", err)
