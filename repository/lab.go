@@ -8,8 +8,6 @@ import (
 	"os/exec"
 
 	"actlabs-auth/entity"
-
-	"golang.org/x/exp/slog"
 )
 
 type labRepository struct{}
@@ -71,7 +69,6 @@ func (l *labRepository) AddLab(labId string, lab string, typeOfLab string) error
 }
 
 func (l *labRepository) DeleteLab(labId string, typeOfLab string) error {
-	slog.Info("Command" + "az storage blob delete -c repro-project-" + typeOfLab + "s -n " + labId + ".json --account-name " + entity.StorageAccountName + " --sas-token '" + entity.SasToken + "'")
 	_, err := exec.Command("bash", "-c", "az storage blob delete -c repro-project-"+typeOfLab+"s -n "+labId+".json --account-name "+entity.StorageAccountName+" --sas-token '"+entity.SasToken+"'").Output()
 	return err
 }

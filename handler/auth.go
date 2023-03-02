@@ -87,7 +87,7 @@ func (h *AuthHandler) AddDefaultRoles(c *gin.Context) {
 	userPrincipal, _ := helper.GetUserPrincipalFromMSALAuthToken(authToken)
 	role := "user"
 
-	slog.Info("Adding default role: ", role, " for user: ", userPrincipal)
+	slog.Info("Adding default role: " + role + " for user: " + userPrincipal)
 	err := h.authService.AddRole(userPrincipal, role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

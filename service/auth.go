@@ -3,7 +3,6 @@ package service
 import (
 	"actlabs-auth/entity"
 	"actlabs-auth/helper"
-	"strings"
 
 	"golang.org/x/exp/slog"
 )
@@ -19,17 +18,17 @@ func NewAuthService(authRepository entity.AuthRepository) entity.AuthService {
 }
 
 func (s *AuthService) GetRoles(userPrincipal string) (entity.Roles, error) {
-	slog.Info("Getting roles for user: ", userPrincipal)
+	slog.Info("Getting roles for user: " + userPrincipal)
 	roles, err := s.authRepository.GetRoles(userPrincipal)
 	if err != nil {
 		slog.Error("Error getting roles: ", err)
+	}
 
-		// if erro contains "ERROR CODE: ResourceNotFound" then add the user role
-		if strings.Contains(err.Error(), "ERROR CODE: ResourceNotFound") {
-			roles := []string{"user"}
-			if err := s.authRepository.AddRole(userPrincipal, roles); err != nil {
-				slog.Error("Error adding role: ", err)
-			}
+	// if roles doesn not contain user role then add it
+	if !helper.Contains(roles, "user") {
+		roles = append(roles, "user")
+		if err := s.authRepository.AddRole(userPrincipal, roles); err != nil {
+			slog.Error("Error adding 'user' role: ", err)
 		}
 	}
 
@@ -51,7 +50,7 @@ func (s *AuthService) GetAllRoles() ([]entity.Roles, error) {
 }
 
 func (s *AuthService) DeleteRole(userPrincipal string, role string) error {
-	slog.Info("Deleting role: ", role, " for user: ", userPrincipal)
+	slog.Info("Deleting role: " + role + " for user: " + userPrincipal)
 
 	roles, err := s.authRepository.GetRoles(userPrincipal)
 	if err != nil {
@@ -80,7 +79,7 @@ func (s *AuthService) AddRole(userPrincipal string, role string) error {
 	}
 
 	if helper.Contains(roles, role) {
-		slog.Info("Role already exists: ", role)
+		slog.Info("Role already exists: " + role)
 		return nil
 	}
 

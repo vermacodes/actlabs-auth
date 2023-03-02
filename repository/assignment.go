@@ -8,8 +8,6 @@ import (
 	"os/exec"
 
 	"actlabs-auth/entity"
-
-	"golang.org/x/exp/slog"
 )
 
 type assignmentRepository struct{}
@@ -79,7 +77,6 @@ func (a *assignmentRepository) DeleteAssignment(assignmentId string) error {
 }
 
 func (a *assignmentRepository) CreateAssignment(assignmentId string, assignment string) error {
-	slog.Info("Using SAS Token" + entity.SasToken)
 	_, err := exec.Command("bash", "-c", "echo '"+assignment+"' | az storage blob upload --data @- -c repro-project-assignments -n "+assignmentId+".json --account-name "+entity.StorageAccountName+" --sas-token '"+entity.SasToken+"' --overwrite").Output()
 	return err
 }
