@@ -3,6 +3,7 @@ package service
 import (
 	"actlabs-auth/entity"
 	"actlabs-auth/helper"
+	"strings"
 
 	"golang.org/x/exp/slog"
 )
@@ -22,6 +23,14 @@ func (s *AuthService) GetRoles(userPrincipal string) (entity.Roles, error) {
 	roles, err := s.authRepository.GetRoles(userPrincipal)
 	if err != nil {
 		slog.Error("Error getting roles: ", err)
+
+		// if erro contains "ERROR CODE: ResourceNotFound" then add the user role
+		if strings.Contains(err.Error(), "ERROR CODE: ResourceNotFound") {
+			roles := []string{"user"}
+			if err := s.authRepository.AddRole(userPrincipal, roles); err != nil {
+				slog.Error("Error adding role: ", err)
+			}
+		}
 	}
 
 	// Add the roles to the Roles object.
@@ -59,7 +68,7 @@ func (s *AuthService) DeleteRole(userPrincipal string, role string) error {
 }
 
 func (s *AuthService) AddRole(userPrincipal string, role string) error {
-	slog.Info("Adding role: ", role, " for user: ", userPrincipal)
+	slog.Info("Adding role: " + role + " for user: " + userPrincipal)
 
 	roles := []string{}
 
