@@ -13,7 +13,7 @@ import (
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		slog.Info("Middleware: AuthRequired")
+		slog.Debug("Middleware: AuthRequired")
 
 		// Get the auth token from the request header
 		authToken := c.GetHeader("Authorization")
@@ -39,7 +39,7 @@ func AuthRequired() gin.HandlerFunc {
 
 func AdminRequired(authService entity.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		slog.Info("Middleware: AdminRequired")
+		slog.Debug("Middleware: AdminRequired")
 
 		// Get the auth token from the request header
 		authToken := c.GetHeader("Authorization")
@@ -86,7 +86,7 @@ func AdminRequired(authService entity.AuthService) gin.HandlerFunc {
 
 func MentorRequired(authService entity.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		slog.Info("Middleware: MentorRequired")
+		slog.Debug("Middleware: MentorRequired")
 
 		// Get the auth token from the request header
 		authToken := c.GetHeader("Authorization")
