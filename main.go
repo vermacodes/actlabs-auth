@@ -51,7 +51,7 @@ func main() {
 	handler.NewAdminAuthHandler(adminAuthRouter, authService)
 
 	mentorAuthRouter := authRouter.Group("/")
-	mentorAuthRouter.Use(middleware.AdminRequired(authService))
+	mentorAuthRouter.Use(middleware.MentorRequired(authService))
 
 	labService := service.NewLabService(repository.NewLabRepository())
 	handler.NewLabHandler(authRouter, labService)
