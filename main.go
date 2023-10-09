@@ -46,6 +46,9 @@ func main() {
 	authService := service.NewAuthService(repository.NewAuthRepository())
 	handler.NewAuthHandler(authRouter, authService)
 
+	loggingService := service.NewLoggingService(repository.NewLoggingRepository())
+	handler.NewLoggingHandler(authRouter, loggingService)
+
 	adminAuthRouter := authRouter.Group("/")
 	adminAuthRouter.Use(middleware.AdminRequired(authService))
 	handler.NewAdminAuthHandler(adminAuthRouter, authService)
