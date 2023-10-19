@@ -23,9 +23,15 @@ func NewLabHandlerMentorRequired(r *gin.RouterGroup, labService entity.LabServic
 	handler := &labHandler{
 		labService: labService,
 	}
-	r.POST("/lab/protected", handler.AddLab)
 	r.DELETE("/lab/protected", handler.DeleteLab)
 	r.GET("/lab/protected/:typeOfLab", handler.GetProtectedLabs)
+}
+
+func NewLabHandlerMentorRequiredWithCreditMiddleware(r *gin.RouterGroup, labService entity.LabService) {
+	handler := &labHandler{
+		labService: labService,
+	}
+	r.POST("/lab/protected", handler.AddLab)
 }
 
 func (l *labHandler) GetPublicLabs(c *gin.Context) {

@@ -6,6 +6,7 @@ import (
 	"actlabs-auth/repository"
 	"actlabs-auth/service"
 	"os"
+	"strconv"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -15,15 +16,15 @@ import (
 func main() {
 
 	// Get the log level from the environment or default to 8.
-	// logLevel := os.Getenv("LOG_LEVEL")
-	// logLevelInt, err := strconv.Atoi(logLevel)
-	// if err != nil {
-	// 	logLevelInt = 8
-	// }
+	logLevel := os.Getenv("LOG_LEVEL")
+	logLevelInt, err := strconv.Atoi(logLevel)
+	if err != nil {
+		logLevelInt = 0
+	}
 
 	// Create a new logger.
 	opts := slog.HandlerOptions{
-		//Level:     slog.Level(logLevelInt),
+		Level:     slog.Level(logLevelInt),
 		AddSource: true,
 	}
 
@@ -39,9 +40,13 @@ func main() {
 
 	router.Use(cors.New(config))
 
+	// auth required
 	authRouter := router.Group("/")
 
 	authRouter.Use(middleware.AuthRequired())
+
+	labService := service.NewLabService(repository.NewLabRepository())
+	handler.NewLabHandler(authRouter, labService)
 
 	authService := service.NewAuthService(repository.NewAuthRepository())
 	handler.NewAuthHandler(authRouter, authService)
@@ -53,12 +58,15 @@ func main() {
 	adminAuthRouter.Use(middleware.AdminRequired(authService))
 	handler.NewAdminAuthHandler(adminAuthRouter, authService)
 
+	// mentor required
 	mentorAuthRouter := authRouter.Group("/")
 	mentorAuthRouter.Use(middleware.MentorRequired(authService))
-
-	labService := service.NewLabService(repository.NewLabRepository())
-	handler.NewLabHandler(authRouter, labService)
 	handler.NewLabHandlerMentorRequired(mentorAuthRouter, labService)
+
+	// apply middlware to all POST requests.
+	labMentorAuthRouter := mentorAuthRouter.Group("/")
+	labMentorAuthRouter.Use(middleware.UpdateCredits())
+	handler.NewLabHandlerMentorRequiredWithCreditMiddleware(labMentorAuthRouter, labService)
 
 	assignmentService := service.NewAssignmentService(repository.NewAssignmentRepository(), labService)
 	handler.NewAssignmentHandler(mentorAuthRouter, assignmentService)
