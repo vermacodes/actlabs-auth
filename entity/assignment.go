@@ -1,6 +1,6 @@
 package entity
 
-type Assigment struct {
+type Assignment struct {
 	Id      string `json:"id"`
 	User    string `json:"user"`
 	LabId   string `json:"labId"`
@@ -9,17 +9,17 @@ type Assigment struct {
 }
 
 type AssignmentService interface {
-	GetAssignments() ([]Assigment, error)
+	GetAssignments() ([]Assignment, error)
 	GetMyAssignments(userPrincipal string) ([]LabType, error)
-	CreateAssignment(Assigment) error
-	// TODO: UpdateAssignment(Assigment) error
-	DeleteAssignment(Assigment) error
+	CreateAssignment(Assignment) error
+	// TODO: UpdateAssignment(Assignment) error
+	DeleteAssignment(Assignment) error
 }
 
 type AssignmentRepository interface {
 	// List of all the available assignments.
 	GetEnumerationResults() (EnumerationResults, error)
-	GetAssignment(name string) (Assigment, error)
+	GetAssignment(name string) (Assignment, error)
 	DeleteAssignment(assignmentId string) error
 	CreateAssignment(assignmentId string, assignment string) error
 

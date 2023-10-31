@@ -47,8 +47,8 @@ func (a *assignmentRepository) GetEnumerationResults() (entity.EnumerationResult
 	return er, nil
 }
 
-func (a *assignmentRepository) GetAssignment(name string) (entity.Assigment, error) {
-	assignment := entity.Assigment{}
+func (a *assignmentRepository) GetAssignment(name string) (entity.Assignment, error) {
+	assignment := entity.Assignment{}
 
 	// URL of the blob with SAS token.
 	url := "https://" + entity.StorageAccountName + ".blob.core.windows.net/repro-project-assignments/" + name + "" + entity.SasToken

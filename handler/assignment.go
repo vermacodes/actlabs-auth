@@ -10,12 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type assigmentHandler struct {
+type assignmentHandler struct {
 	assignmentService entity.AssignmentService
 }
 
 func NewAssignmentHandler(r *gin.RouterGroup, service entity.AssignmentService) {
-	handler := &assigmentHandler{
+	handler := &assignmentHandler{
 		assignmentService: service,
 	}
 
@@ -25,7 +25,7 @@ func NewAssignmentHandler(r *gin.RouterGroup, service entity.AssignmentService) 
 	r.DELETE("/assignment", handler.DeleteAssignment)
 }
 
-func (a *assigmentHandler) GetAssignments(c *gin.Context) {
+func (a *assignmentHandler) GetAssignments(c *gin.Context) {
 	assignments, err := a.assignmentService.GetAssignments()
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
@@ -35,7 +35,7 @@ func (a *assigmentHandler) GetAssignments(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, assignments)
 }
 
-func (a *assigmentHandler) GetMyAssignments(c *gin.Context) {
+func (a *assignmentHandler) GetMyAssignments(c *gin.Context) {
 	// Get the auth token from the request header
 	authToken := c.GetHeader("Authorization")
 
@@ -53,8 +53,8 @@ func (a *assigmentHandler) GetMyAssignments(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, assignments)
 }
 
-func (a *assigmentHandler) CreateAssignment(c *gin.Context) {
-	assignment := entity.Assigment{}
+func (a *assignmentHandler) CreateAssignment(c *gin.Context) {
+	assignment := entity.Assignment{}
 	if err := c.Bind(&assignment); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
@@ -68,8 +68,8 @@ func (a *assigmentHandler) CreateAssignment(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
-func (a *assigmentHandler) DeleteAssignment(c *gin.Context) {
-	assignment := entity.Assigment{}
+func (a *assignmentHandler) DeleteAssignment(c *gin.Context) {
+	assignment := entity.Assignment{}
 	if err := c.Bind(&assignment); err != nil {
 		c.Status(http.StatusBadRequest)
 		return

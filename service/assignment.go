@@ -23,8 +23,8 @@ func NewAssignmentService(assignmentRepository entity.AssignmentRepository, labS
 	}
 }
 
-func (a *assignmentService) GetAssignments() ([]entity.Assigment, error) {
-	assignments := []entity.Assigment{}
+func (a *assignmentService) GetAssignments() ([]entity.Assignment, error) {
+	assignments := []entity.Assignment{}
 
 	ar, err := a.assignmentRepository.GetEnumerationResults()
 	if err != nil {
@@ -76,7 +76,7 @@ func (a *assignmentService) GetMyAssignments(userPrincipal string) ([]entity.Lab
 	return assignedLabs, nil
 }
 
-func (a *assignmentService) CreateAssignment(assignment entity.Assigment) error {
+func (a *assignmentService) CreateAssignment(assignment entity.Assignment) error {
 	// Gnerate Assignmetn ID
 	if assignment.Id == "" {
 		assignment.Id = helper.Generate(20)
@@ -125,7 +125,7 @@ func (a *assignmentService) CreateAssignment(assignment entity.Assigment) error 
 	return nil
 }
 
-func (a *assignmentService) DeleteAssignment(assignment entity.Assigment) error {
+func (a *assignmentService) DeleteAssignment(assignment entity.Assignment) error {
 	if err := a.assignmentRepository.DeleteAssignment(assignment.Id); err != nil {
 		slog.Error("not able to delete assingment with id "+assignment.Id, err)
 		return err
