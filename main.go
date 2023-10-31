@@ -63,13 +63,13 @@ func main() {
 	mentorAuthRouter.Use(middleware.MentorRequired(authService))
 	handler.NewLabHandlerMentorRequired(mentorAuthRouter, labService)
 
-	// apply middlware to all POST requests.
+	// apply middleware to all POST requests.
 	labMentorAuthRouter := mentorAuthRouter.Group("/")
 	labMentorAuthRouter.Use(middleware.UpdateCredits())
 	handler.NewLabHandlerMentorRequiredWithCreditMiddleware(labMentorAuthRouter, labService)
 
 	assignmentService := service.NewAssignmentService(repository.NewAssignmentRepository(), labService)
-	handler.NewAssignmentHandler(mentorAuthRouter, assignmentService)
+	handler.NewAssignmentHandler(authRouter, assignmentService)
 
 	router.Run()
 }
