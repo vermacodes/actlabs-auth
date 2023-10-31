@@ -16,7 +16,7 @@ func NewLoggingRepository() entity.LoggingRepository {
 
 func (r *loggingRepository) OperationRecord(operation entity.Operation, userPrincipal string) error {
 
-	// getServiceClient() can be found in repsitory/auth.go
+	// getServiceClient() can be found in repository/auth.go
 	serviceClient := getServiceClient().NewClient("Operations")
 
 	operationRecord := entity.OperationRecord{

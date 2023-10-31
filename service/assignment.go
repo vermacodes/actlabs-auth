@@ -77,7 +77,7 @@ func (a *assignmentService) GetMyAssignments(userPrincipal string) ([]entity.Lab
 }
 
 func (a *assignmentService) CreateAssignment(assignment entity.Assignment) error {
-	// Gnerate Assignmetn ID
+	// Generate Assignment ID
 	if assignment.Id == "" {
 		assignment.Id = helper.Generate(20)
 	}
@@ -100,7 +100,7 @@ func (a *assignmentService) CreateAssignment(assignment entity.Assignment) error
 
 	assignments, err := a.GetAssignments()
 	if err != nil {
-		slog.Error("not able to list existing assingments", err)
+		slog.Error("not able to list existing assignments", err)
 		return err
 	}
 
@@ -127,7 +127,7 @@ func (a *assignmentService) CreateAssignment(assignment entity.Assignment) error
 
 func (a *assignmentService) DeleteAssignment(assignment entity.Assignment) error {
 	if err := a.assignmentRepository.DeleteAssignment(assignment.Id); err != nil {
-		slog.Error("not able to delete assingment with id "+assignment.Id, err)
+		slog.Error("not able to delete assignment with id "+assignment.Id, err)
 		return err
 	}
 	return nil

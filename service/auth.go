@@ -24,7 +24,7 @@ func (s *AuthService) GetRoles(userPrincipal string) (entity.Roles, error) {
 		slog.Error("Error getting roles: ", err)
 	}
 
-	// if roles doesn not contain user role then add it
+	// if roles does not contain user role then add it
 	if !helper.Contains(roles, "user") {
 		roles = append(roles, "user")
 		if err := s.authRepository.AddRole(userPrincipal, roles); err != nil {

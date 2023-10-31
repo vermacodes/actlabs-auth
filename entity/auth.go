@@ -45,7 +45,7 @@ type AuthRepository interface {
 	GetRoles(userPrincipal string) ([]string, error)
 	GetAllRoles() ([]Roles, error)
 
-	// This method is used to delete the record for UserPricipal from the table.
+	// This method is used to delete the record for UserPrincipal from the table.
 	// This is used only when the last role is removed from the user.
 	DeleteRole(userPrincipal string) error
 	AddRole(userPrincipal string, roles []string) error

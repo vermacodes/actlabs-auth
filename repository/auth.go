@@ -20,7 +20,7 @@ func NewAuthRepository() entity.AuthRepository {
 func getServiceClient() *aztables.ServiceClient {
 	if entity.SasToken == "" {
 		slog.Error("Error ->", errors.New("sas token must be set before the application starts"))
-		panic("sas tokenmust be set before the application starts")
+		panic("sas token must be set before the application starts")
 	}
 
 	if entity.StorageAccountName == "" {
@@ -49,7 +49,7 @@ func (r *AuthRepository) GetRoles(userPrincipal string) ([]string, error) {
 
 	roleRecord := entity.RoleRecord{}
 	if err := json.Unmarshal(principalRecord.Value, &roleRecord); err != nil {
-		slog.Error("Error unmarshalling principal record: ", err)
+		slog.Error("Error unmarshal principal record: ", err)
 		return roles, err
 	}
 
@@ -73,7 +73,7 @@ func (r *AuthRepository) GetAllRoles() ([]entity.Roles, error) {
 		for _, entity := range response.Entities {
 			var myEntity aztables.EDMEntity
 			if err := json.Unmarshal(entity, &myEntity); err != nil {
-				slog.Error("Error unmarshalling principal record: ", err)
+				slog.Error("Error unmarshal principal record: ", err)
 				return roles, err
 			}
 
@@ -87,7 +87,7 @@ func (r *AuthRepository) GetAllRoles() ([]entity.Roles, error) {
 	return roles, nil
 }
 
-// Use this function to complete delete the record for UserPricipal.
+// Use this function to complete delete the record for UserPrincipal.
 func (r *AuthRepository) DeleteRole(userPrincipal string) error {
 	serviceClient := getServiceClient().NewClient("Roles")
 	_, err := serviceClient.DeleteEntity(context.TODO(), "actlabs", userPrincipal, nil)
