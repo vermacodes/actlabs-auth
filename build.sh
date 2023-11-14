@@ -22,5 +22,5 @@ go build -ldflags "-X 'actlabs-auth/entity.SasToken=$SAS_TOKEN' -X 'actlabs-auth
 
 docker build -t actlab.azurecr.io/actlabs-auth .
 
-az acr login --name actlab
+az acr login --name actlab --subscription ACT-CSS-Readiness
 docker push actlab.azurecr.io/actlabs-auth:latest

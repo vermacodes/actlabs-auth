@@ -66,6 +66,9 @@ func (a *assignmentService) GetMyAssignments(userPrincipal string) ([]entity.Lab
 			if assignment.LabId == lab.Id {
 				if assignment.User == userPrincipal {
 					lab.ExtendScript = "redacted"
+					lab.Description = "<p>" + lab.Name + "</p>"
+					lab.Type = "assignment"
+					lab.Tags = []string{"assignment"}
 					assignedLabs = append(assignedLabs, lab)
 					break
 				}
