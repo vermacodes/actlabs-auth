@@ -19,9 +19,10 @@ func AuthRequired() gin.HandlerFunc {
 		authToken := c.GetHeader("Authorization")
 
 		// Remove Bearer from the authToken
-		authToken = strings.Split(authToken, "Bearer ")[1]
+		splitToken := strings.Split(authToken, "Bearer ")
+		if len(splitToken) < 2 {
+			// Handle the error situation when the token is not in the expected format
 
-		if authToken == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "no auth token provided"})
 			return
 		}
