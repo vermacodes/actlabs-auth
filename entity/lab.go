@@ -26,7 +26,7 @@ type TfvarKubernetesClusterType struct {
 	DefaultNodePool       TfvarDefaultNodePoolType `json:"defaultNodePool"`
 }
 
-type TfvarVirtualNeworkType struct {
+type TfvarVirtualNetworkType struct {
 	AddressSpace []string
 }
 
@@ -55,7 +55,7 @@ type AppGatewayType struct{}
 
 type TfvarConfigType struct {
 	ResourceGroup         TfvarResourceGroupType          `json:"resourceGroup"`
-	VirtualNetworks       []TfvarVirtualNeworkType        `json:"virtualNetworks"`
+	VirtualNetworks       []TfvarVirtualNetworkType       `json:"virtualNetworks"`
 	Subnets               []TfvarSubnetType               `json:"subnets"`
 	Jumpservers           []TfvarJumpserverType           `json:"jumpservers"`
 	NetworkSecurityGroups []TfvarNetworkSecurityGroupType `json:"networkSecurityGroups"`
@@ -66,7 +66,8 @@ type TfvarConfigType struct {
 }
 
 type Blob struct {
-	Name string `xml:"Name" json:"name"`
+	Name      string `xml:"Name" json:"name"`
+	VersionId string `xml:"VersionId" json:"versionId"`
 	//Url  string `xml:"Url" json:"url"`
 }
 
@@ -93,11 +94,13 @@ type LabType struct {
 	CreatedOn    string          `json:"createdOn"`
 	UpdatedBy    string          `json:"updatedBy"`
 	UpdatedOn    string          `json:"updatedOn"`
+	VersionId    string          `json:"versionId"`
 }
 
 type BlobType struct {
-	Name string `json:"name"`
-	Url  string `json:"url"`
+	Name      string `json:"name"`
+	Url       string `json:"url"`
+	VersionId string `json:"versionId"`
 }
 
 type LabService interface {
@@ -106,13 +109,14 @@ type LabService interface {
 	GetPublicLabs(typeOfLab string) ([]LabType, error)
 	AddPublicLab(LabType) error
 	DeletePublicLab(LabType) error
+	GetLabVersions(typeOfLab string, labId string) ([]LabType, error)
 }
 
 type LabRepository interface {
 
 	// Public labs
-	GetEnumerationResults(typeOfLab string) (EnumerationResults, error)
-	GetLab(name string, typeOfLab string) (LabType, error)
+	GetEnumerationResults(typeOfLab string, includeVersions bool) (EnumerationResults, error)
+	GetLab(name string, typeOfLab string, versionId string) (LabType, error)
 	AddLab(labId string, lab string, typeOfLab string) error
 	DeleteLab(labId string, typeOfLab string) error
 }
