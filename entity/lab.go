@@ -66,8 +66,9 @@ type TfvarConfigType struct {
 }
 
 type Blob struct {
-	Name      string `xml:"Name" json:"name"`
-	VersionId string `xml:"VersionId" json:"versionId"`
+	Name             string `xml:"Name" json:"name"`
+	VersionId        string `xml:"VersionId" json:"versionId"`
+	IsCurrentVersion bool   `xml:"IsCurrentVersion" json:"isCurrentVersion"`
 	//Url  string `xml:"Url" json:"url"`
 }
 
@@ -82,19 +83,20 @@ type EnumerationResults struct {
 }
 
 type LabType struct {
-	Id           string          `json:"id"`
-	Name         string          `json:"name"`
-	Description  string          `json:"description"`
-	Tags         []string        `json:"tags"`
-	Template     TfvarConfigType `json:"template"`
-	ExtendScript string          `json:"extendScript"`
-	Message      string          `json:"message"`
-	Type         string          `json:"type"`
-	CreatedBy    string          `json:"createdBy"`
-	CreatedOn    string          `json:"createdOn"`
-	UpdatedBy    string          `json:"updatedBy"`
-	UpdatedOn    string          `json:"updatedOn"`
-	VersionId    string          `json:"versionId"`
+	Id               string          `json:"id"`
+	Name             string          `json:"name"`
+	Description      string          `json:"description"`
+	Tags             []string        `json:"tags"`
+	Template         TfvarConfigType `json:"template"`
+	ExtendScript     string          `json:"extendScript"`
+	Message          string          `json:"message"`
+	Type             string          `json:"type"`
+	CreatedBy        string          `json:"createdBy"`
+	CreatedOn        string          `json:"createdOn"`
+	UpdatedBy        string          `json:"updatedBy"`
+	UpdatedOn        string          `json:"updatedOn"`
+	VersionId        string          `json:"versionId"`
+	IsCurrentVersion bool            `json:"isCurrentVersion"`
 }
 
 type BlobType struct {

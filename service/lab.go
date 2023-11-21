@@ -88,6 +88,7 @@ func (l *labService) GetLabVersions(typeOfLab string, labId string) ([]entity.La
 			continue
 		}
 		lab.VersionId = element.VersionId
+		lab.IsCurrentVersion = element.IsCurrentVersion
 		labs = append(labs, lab)
 	}
 
