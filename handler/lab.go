@@ -17,6 +17,7 @@ func NewLabHandler(r *gin.RouterGroup, labService entity.LabService) {
 		labService: labService,
 	}
 	r.GET("/lab/public/:typeOfLab", handler.GetPublicLabs)
+	r.GET("/lab/public/versions/:typeOfLab/:labId", handler.GetLabVersions)
 }
 
 func NewLabHandlerMentorRequired(r *gin.RouterGroup, labService entity.LabService) {
@@ -25,6 +26,7 @@ func NewLabHandlerMentorRequired(r *gin.RouterGroup, labService entity.LabServic
 	}
 	r.DELETE("/lab/protected", handler.DeleteLab)
 	r.GET("/lab/protected/:typeOfLab", handler.GetProtectedLabs)
+	r.GET("/lab/protected/versions/:typeOfLab/:labId", handler.GetLabVersions)
 }
 
 func NewLabHandlerMentorRequiredWithCreditMiddleware(r *gin.RouterGroup, labService entity.LabService) {
@@ -38,7 +40,7 @@ func (l *labHandler) GetPublicLabs(c *gin.Context) {
 	typeOfLab := c.Param("typeOfLab")
 
 	// These labs are protected, use protected API
-	if typeOfLab == "mockcases" || typeOfLab == "labexercises" {
+	if typeOfLab == "mockcases" || typeOfLab == "readinesslabs" {
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -91,4 +93,17 @@ func (l *labHandler) DeleteLab(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func (l *labHandler) GetLabVersions(c *gin.Context) {
+	typeOfLab := c.Param("typeOfLab")
+	labId := c.Param("labId")
+
+	labs, err := l.labService.GetLabVersions(typeOfLab, labId)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, labs)
 }

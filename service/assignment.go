@@ -53,9 +53,9 @@ func (a *assignmentService) GetMyAssignments(userPrincipal string) ([]entity.Lab
 		return assignedLabs, err
 	}
 
-	labs, err := a.labService.GetPublicLabs("labexercises")
+	labs, err := a.labService.GetPublicLabs("readinesslabs")
 	if err != nil {
-		slog.Error("not able to get lab exercises", err)
+		slog.Error("not able to get readiness labs", err)
 		return assignedLabs, err
 	}
 

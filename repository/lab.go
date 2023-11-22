@@ -16,12 +16,15 @@ func NewLabRepository() entity.LabRepository {
 	return &labRepository{}
 }
 
-func (l *labRepository) GetEnumerationResults(typeOfLab string) (entity.EnumerationResults, error) {
+func (l *labRepository) GetEnumerationResults(typeOfLab string, includeVersions bool) (entity.EnumerationResults, error) {
 	er := entity.EnumerationResults{}
 
 	// URL of the container to list the blobs
 	url := "https://" + entity.StorageAccountName + ".blob.core.windows.net/repro-project-" + typeOfLab + "" + entity.SasToken + "&restype=container&comp=list"
 
+	if includeVersions {
+		url = url + "&include=versions"
+	}
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("Accept", "application/json")
 
@@ -41,11 +44,15 @@ func (l *labRepository) GetEnumerationResults(typeOfLab string) (entity.Enumerat
 	return er, nil
 }
 
-func (l *labRepository) GetLab(name string, typeOfLab string) (entity.LabType, error) {
+func (l *labRepository) GetLab(name string, typeOfLab string, versionId string) (entity.LabType, error) {
 	lab := entity.LabType{}
 
 	// URL of the blob with SAS token.
 	url := "https://" + entity.StorageAccountName + ".blob.core.windows.net/repro-project-" + typeOfLab + "/" + name + "" + entity.SasToken
+
+	if versionId != "" {
+		url = url + "&versionid=" + versionId
+	}
 
 	resp, err := http.Get(url)
 	if err != nil {
