@@ -107,7 +107,7 @@ type BlobType struct {
 
 type LabService interface {
 	// Public Labs
-	// Includes = sharedlabs, labexercises, mockcases.
+	// Includes = sharedlabs, readinesslabs, mockcases.
 	GetPublicLabs(typeOfLab string) ([]LabType, error)
 	AddPublicLab(LabType) error
 	DeletePublicLab(LabType) error
