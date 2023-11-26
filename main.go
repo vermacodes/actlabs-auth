@@ -70,6 +70,7 @@ func main() {
 
 	assignmentService := service.NewAssignmentService(repository.NewAssignmentRepository(), labService)
 	handler.NewAssignmentHandler(authRouter, assignmentService)
+	handler.NewAssignmentHandlerMentorRequired(mentorAuthRouter, assignmentService)
 
 	router.Run()
 }
