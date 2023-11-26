@@ -20,7 +20,6 @@ func NewAssignmentHandler(r *gin.RouterGroup, service entity.AssignmentService) 
 	}
 
 	r.GET("/assignments/labs", handler.GetAllLabsRedacted)
-	r.GET("/assignments/labs/:userId", handler.GetAssignedLabsRedactedByUserId)
 	r.GET("/assignments/my", handler.GetMyAssignments)
 	r.POST("/assignments/my", handler.CreateMyAssignments)
 	r.DELETE("/assignments/my", handler.DeleteMyAssignments)
