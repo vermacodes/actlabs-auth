@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 
@@ -23,33 +22,60 @@ func NewAssignmentService(assignmentRepository entity.AssignmentRepository, labS
 	}
 }
 
-func (a *assignmentService) GetAssignments() ([]entity.Assignment, error) {
-	assignments := []entity.Assignment{}
-
-	ar, err := a.assignmentRepository.GetEnumerationResults()
+func (a *assignmentService) GetAllAssignments() ([]entity.Assignment, error) {
+	assignments, err := a.assignmentRepository.GetAllAssignments()
 	if err != nil {
-		slog.Error("not able to list assignments", err)
+		slog.Error("not able to get assignments", err)
 		return assignments, err
 	}
-
-	for _, element := range ar.Blobs.Blob {
-		assignment, err := a.assignmentRepository.GetAssignment(element.Name)
-		if err != nil {
-			slog.Error("not able to get assignment "+assignment.Id, err)
-			continue
-		}
-		assignments = append(assignments, assignment)
-	}
-
 	return assignments, nil
 }
 
-func (a *assignmentService) GetMyAssignments(userPrincipal string) ([]entity.LabType, error) {
+func (a *assignmentService) GetAssignmentsByLabId(labId string) ([]entity.Assignment, error) {
+	assignments, err := a.assignmentRepository.GetAssignmentsByLabId(labId)
+	if err != nil {
+		slog.Error("not able to get assignments for lab "+labId, err)
+		return assignments, err
+	}
+	return assignments, nil
+}
+
+func (a *assignmentService) GetAssignmentsByUserId(userId string) ([]entity.Assignment, error) {
+	assignments, err := a.assignmentRepository.GetAssignmentsByUserId(userId)
+	if err != nil {
+		slog.Error("not able to get assignments for user "+userId, err)
+		return assignments, err
+	}
+	return assignments, nil
+}
+
+func (a *assignmentService) GetAllLabsRedacted() ([]entity.LabType, error) {
+	readinessLabsRedacted := []entity.LabType{}
+
+	labs, err := a.labService.GetPublicLabs("readinesslabs")
+	if err != nil {
+		slog.Error("not able to get readiness labs", err)
+		return readinessLabsRedacted, err
+	}
+
+	for _, lab := range labs {
+		slog.Debug("Lab ID : " + lab.Name)
+		lab.ExtendScript = "redacted"
+		lab.Description = "<p>" + lab.Name + "</p>"
+		lab.Type = "assignment"
+		lab.Tags = []string{"assignment"}
+		readinessLabsRedacted = append(readinessLabsRedacted, lab)
+	}
+
+	return readinessLabsRedacted, nil
+}
+
+func (a *assignmentService) GetAssignedLabsRedactedByUserId(userId string) ([]entity.LabType, error) {
 	assignedLabs := []entity.LabType{}
 
-	assignments, err := a.GetAssignments()
+	assignments, err := a.GetAssignmentsByUserId(userId)
 	if err != nil {
-		slog.Error("not able to get assignments", err)
+		slog.Error("not able to get assignments for user"+userId, err)
 		return assignedLabs, err
 	}
 
@@ -60,11 +86,11 @@ func (a *assignmentService) GetMyAssignments(userPrincipal string) ([]entity.Lab
 	}
 
 	for _, assignment := range assignments {
-		slog.Info("Assignment ID : " + assignment.Id)
+		slog.Info("Lab ID : " + assignment.LabId)
 		for _, lab := range labs {
 			slog.Info("Lab ID : " + lab.Name)
 			if assignment.LabId == lab.Id {
-				if assignment.User == userPrincipal {
+				if assignment.UserId == userId {
 					lab.ExtendScript = "redacted"
 					lab.Description = "<p>" + lab.Name + "</p>"
 					lab.Type = "assignment"
@@ -79,59 +105,54 @@ func (a *assignmentService) GetMyAssignments(userPrincipal string) ([]entity.Lab
 	return assignedLabs, nil
 }
 
-func (a *assignmentService) CreateAssignment(assignment entity.Assignment) error {
-	// Generate Assignment ID
-	if assignment.Id == "" {
-		assignment.Id = helper.Generate(20)
-	}
+func (a *assignmentService) CreateAssignments(userIds []string, labIds []string, createdBy string) error {
+	for _, userId := range userIds {
 
-	if !strings.Contains("@microsoft.com", assignment.User) {
-		assignment.User = assignment.User + "@microsoft.com"
-	}
+		if !strings.Contains(userId, "@microsoft.com") {
+			userId = userId + "@microsoft.com"
+		}
 
-	// Validate User ID
-	valid, err := a.assignmentRepository.ValidateUser(assignment.User)
-	if err != nil {
-		slog.Error("not able to validate user id", err)
-	}
+		valid, err := a.assignmentRepository.ValidateUser(userId)
+		if err != nil {
+			slog.Error("not able to validate user id"+userId, err)
+			continue
+		}
+		if !valid {
+			err := errors.New("user id is not valid")
+			slog.Error("user id is not valid"+userId, err)
+			continue
+		}
 
-	if !valid {
-		err := errors.New("user id is not valid")
-		slog.Error("user id is not valid", err)
-		return err
-	}
+		for _, labId := range labIds {
 
-	assignments, err := a.GetAssignments()
-	if err != nil {
-		slog.Error("not able to list existing assignments", err)
-		return err
-	}
+			assignment := entity.Assignment{
+				PartitionKey: userId,
+				RowKey:       labId,
+				AssignmentId: userId + "-" + labId,
+				UserId:       userId,
+				LabId:        labId,
+				CreatedBy:    createdBy,
+				CreatedOn:    helper.GetTodaysDateTimeString(),
+				Status:       "assigned",
+			}
 
-	for _, element := range assignments {
-		if element.User == assignment.User && element.LabId == assignment.LabId {
-			slog.Info("assignment already exits")
-			return nil
+			if err := a.assignmentRepository.UpsertAssignment(assignment); err != nil {
+				slog.Error("not able to create assignment", err)
+				return err
+			}
+
+			slog.Debug("Assigned lab " + labId + " to user " + userId)
 		}
 	}
-
-	val, err := json.Marshal(assignment)
-	if err != nil {
-		slog.Error("not able to convert assignment object to string", err)
-		return err
-	}
-
-	if err := a.assignmentRepository.CreateAssignment(assignment.Id, string(val)); err != nil {
-		slog.Error("not able to create assignment", err)
-		return err
-	}
-
 	return nil
 }
 
-func (a *assignmentService) DeleteAssignment(assignment entity.Assignment) error {
-	if err := a.assignmentRepository.DeleteAssignment(assignment.Id); err != nil {
-		slog.Error("not able to delete assignment with id "+assignment.Id, err)
-		return err
+func (a *assignmentService) DeleteAssignments(assignmentIds []string) error {
+	for _, assignmentId := range assignmentIds {
+		if err := a.assignmentRepository.DeleteAssignment(assignmentId); err != nil {
+			slog.Error("not able to delete assignment with id "+assignmentId, err)
+			continue
+		}
 	}
 	return nil
 }

@@ -243,3 +243,8 @@ func GetPublicKey(token string) (string, error) {
 func GetTodaysDateString() string {
 	return time.Now().Format("2006-01-02")
 }
+
+// Return today's date and time in the format yyyy-mm-dd hh:mm:ss as string
+func GetTodaysDateTimeString() string {
+	return time.Now().Format("2006-01-02 15:04:05")
+}

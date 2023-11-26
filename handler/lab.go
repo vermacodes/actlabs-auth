@@ -40,8 +40,8 @@ func (l *labHandler) GetPublicLabs(c *gin.Context) {
 	typeOfLab := c.Param("typeOfLab")
 
 	// These labs are protected, use protected API
-	if typeOfLab == "mockcases" || typeOfLab == "readinesslabs" {
-		c.Status(http.StatusBadRequest)
+	if typeOfLab != "publiclabs" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": typeOfLab + " is not a public lab. Only 'publiclabs' is allowed"})
 		return
 	}
 
