@@ -39,6 +39,10 @@ func (s *AuthService) CreateProfile(profile entity.Profile) error {
 	if existingProfile.UserPrincipal != "" {
 		slog.Debug("Profile already exists for user : " + profile.DisplayName)
 		profile.Roles = existingProfile.Roles
+	} else {
+		// if the user does not exist, then add the user role
+		slog.Debug("Profile does not exist for user : " + profile.DisplayName)
+		profile.Roles = []string{"user"} // IMPORTANT: remove all roles and add only user role
 	}
 
 	// Create the profile

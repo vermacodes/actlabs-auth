@@ -30,10 +30,28 @@ type ProfileRecord struct {
 }
 
 type AuthService interface {
+	// Create a new user profile.
+	// Privilege: User (can only create own profile)
+	// Only allows 'user' role.
 	CreateProfile(profile Profile) error
+
+	// Get a given user's profile.
+	// Privilege: User (can only get own profile)
+	// Privilege: Admin (can get any profile)
 	GetProfile(userPrincipal string) (Profile, error)
+
+	// Get all profiles
+	// Privilege: Admin
 	GetAllProfiles() ([]Profile, error)
+
+	// deletes the role from the user.
+	// if the user has no roles left, then the user is deleted.
+	// Privilege: Admin
 	DeleteRole(userPrincipal string, role string) error
+
+	// adds a role to the user.
+	// User profile must exist before adding a role.
+	// Privilege: Admin
 	AddRole(userPrincipal string, role string) error
 }
 
@@ -46,14 +64,16 @@ type AuthHandler interface {
 }
 
 type AuthRepository interface {
-	// Get Roles
+	// Get Profile from the table.
 	GetProfile(userPrincipal string) (Profile, error)
+
+	// Get all profiles from the table.
 	GetAllProfiles() ([]Profile, error)
 
 	// This method is used to delete the record for UserPrincipal from the table.
 	// This is used only when the last role is removed from the user.
 	DeleteProfile(userPrincipal string) error
 
-	// This method is used to add a role to the user.
+	// This method is used to create or update profile.
 	UpsertProfile(profile Profile) error
 }
