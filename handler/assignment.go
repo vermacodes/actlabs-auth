@@ -20,6 +20,7 @@ func NewAssignmentHandler(r *gin.RouterGroup, service entity.AssignmentService) 
 	}
 
 	r.GET("/assignments/labs", handler.GetAllLabsRedacted)
+	r.GET("/assignments/labs/my", handler.GetMyAssignedLabsRedacted)
 	r.GET("/assignments/my", handler.GetMyAssignments)
 	r.POST("/assignments/my", handler.CreateMyAssignments)
 	r.DELETE("/assignments/my", handler.DeleteMyAssignments)
@@ -53,6 +54,25 @@ func (a *assignmentHandler) GetAllLabsRedacted(c *gin.Context) {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
+	c.IndentedJSON(http.StatusOK, labs)
+}
+
+func (a *assignmentHandler) GetMyAssignedLabsRedacted(c *gin.Context) {
+
+	// Get the auth token from the request header
+	authToken := c.GetHeader("Authorization")
+
+	// Remove Bearer from the authToken
+	authToken = strings.Split(authToken, "Bearer ")[1]
+	//Get the user principal from the auth token
+	userId, _ := helper.GetUserPrincipalFromMSALAuthToken(authToken)
+
+	labs, err := a.assignmentService.GetAssignedLabsRedactedByUserId(userId)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
 	c.IndentedJSON(http.StatusOK, labs)
 }
 
