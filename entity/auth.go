@@ -9,44 +9,51 @@ import (
 var SasToken string
 var StorageAccountName string
 
-type Roles struct {
-	UserPrincipal string   `json:"userPrincipal"`
-	Roles         []string `json:"roles"`
+type Profile struct {
+	ObjectId        string   `json:"objectId"`
+	UserPrincipal   string   `json:"userPrincipal"`
+	DisplayName     string   `json:"displayName"`
+	ProfilePhotoUrl string   `json:"profilePhotoUrl"`
+	Roles           []string `json:"roles"`
 }
 
-// For some reason, I am not able to add Roles as a slice of strings to the table.
-// So, I am converting the slice to a string and then converting it back to a slice.
+// Azure storage table doesn't support adding an array of strings. Thus, the hack.
 // This is not the best way to do it, but it works for now.
-type RoleRecord struct {
-	PartitionKey  string `json:"PartitionKey"`
-	RowKey        string `json:"RowKey"`
-	UserPrincipal string `json:"UserPrincipal"`
-	Roles         string `json:"Roles"`
+type ProfileRecord struct {
+	PartitionKey    string `json:"PartitionKey"`
+	RowKey          string `json:"RowKey"`
+	ObjectId        string `json:"ObjectId"`
+	UserPrincipal   string `json:"UserPrincipal"`
+	DisplayName     string `json:"DisplayName"`
+	ProfilePhotoUrl string `json:"ProfilePhotoUrl"`
+	Roles           string `json:"Roles"`
 }
 
 type AuthService interface {
-	// Get Roles
-	GetRoles(userPrincipal string) (Roles, error)
-	GetAllRoles() ([]Roles, error)
+	// Get Profile
+	GetProfile(userPrincipal string) (Profile, error)
+	GetAllProfiles() ([]Profile, error)
 	DeleteRole(userPrincipal string, role string) error
 	AddRole(userPrincipal string, role string) error
 }
 
 type AuthHandler interface {
 	// Get Roles
-	GetRoles(c *gin.Context)
-	GetAllRoles(c *gin.Context)
+	GetProfile(c *gin.Context)
+	GetAllProfiles(c *gin.Context)
 	DeleteRole(c *gin.Context)
 	AddRole(c *gin.Context)
 }
 
 type AuthRepository interface {
 	// Get Roles
-	GetRoles(userPrincipal string) ([]string, error)
-	GetAllRoles() ([]Roles, error)
+	GetProfile(userPrincipal string) (Profile, error)
+	GetAllProfiles() ([]Profile, error)
 
 	// This method is used to delete the record for UserPrincipal from the table.
 	// This is used only when the last role is removed from the user.
-	DeleteRole(userPrincipal string) error
-	AddRole(userPrincipal string, roles []string) error
+	DeleteProfile(userPrincipal string) error
+
+	// This method is used to add a role to the user.
+	UpsertProfile(profile Profile) error
 }

@@ -62,21 +62,21 @@ func AdminRequired(authService entity.AuthService) gin.HandlerFunc {
 		}
 
 		// Allow all authenticated users to add 'user' role.
-		role := c.Param("role")
-		if role == "user" && c.Request.Method == "POST" {
-			c.Next()
-			return
-		}
+		// role := c.Param("role")
+		// if role == "user" && c.Request.Method == "POST" {
+		// 	c.Next()
+		// 	return
+		// }
 
 		// Get the roles for the calling user
-		roles, err := authService.GetRoles(callingUserPrincipal)
+		profile, err := authService.GetProfile(callingUserPrincipal)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
 		// Check if the calling user has the admin role
-		if !helper.Contains(roles.Roles, "admin") {
+		if !helper.Contains(profile.Roles, "admin") {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user is not an admin"})
 			return
 		}
@@ -109,14 +109,14 @@ func MentorRequired(authService entity.AuthService) gin.HandlerFunc {
 		}
 
 		// Get the roles for the calling user
-		roles, err := authService.GetRoles(callingUserPrincipal)
+		profile, err := authService.GetProfile(callingUserPrincipal)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
 		// Check if the calling user has the mentor role
-		if !helper.Contains(roles.Roles, "mentor") {
+		if !helper.Contains(profile.Roles, "mentor") {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user is not an mentor"})
 			return
 		}

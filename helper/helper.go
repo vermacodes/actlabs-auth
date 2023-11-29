@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"actlabs-auth/entity"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -247,4 +248,28 @@ func GetTodaysDateString() string {
 // Return today's date and time in the format yyyy-mm-dd hh:mm:ss as string
 func GetTodaysDateTimeString() string {
 	return time.Now().Format("2006-01-02 15:04:05")
+}
+
+// ConvertProfileToRecord converts a Profile to a ProfileRecord.
+func ConvertProfileToRecord(profile entity.Profile) entity.ProfileRecord {
+	return entity.ProfileRecord{
+		PartitionKey:    "actlabs",             // this is a static value.
+		RowKey:          profile.UserPrincipal, // UserPrincipal is the unique identifier for the user.
+		ObjectId:        profile.ObjectId,
+		UserPrincipal:   profile.UserPrincipal,
+		DisplayName:     profile.DisplayName,
+		ProfilePhotoUrl: profile.ProfilePhotoUrl,
+		Roles:           strings.Join(profile.Roles, ","),
+	}
+}
+
+// ConvertRecordToProfile converts a ProfileRecord to a Profile.
+func ConvertRecordToProfile(record entity.ProfileRecord) entity.Profile {
+	return entity.Profile{
+		ObjectId:        record.ObjectId,
+		UserPrincipal:   record.UserPrincipal,
+		DisplayName:     record.DisplayName,
+		ProfilePhotoUrl: record.ProfilePhotoUrl,
+		Roles:           strings.Split(record.Roles, ","),
+	}
 }
