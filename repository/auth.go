@@ -124,6 +124,13 @@ func (r *AuthRepository) DeleteProfile(userPrincipal string) error {
 }
 
 func (r *AuthRepository) UpsertProfile(profile entity.Profile) error {
+
+	//Make sure that profile is complete
+	if profile.DisplayName == "" || profile.UserPrincipal == "" {
+		slog.Error("Error creating profile: profile is incomplete", nil)
+		return errors.New("profile is incomplete")
+	}
+
 	serviceClient := getServiceClient().NewClient("Profiles")
 	profileRecord := helper.ConvertProfileToRecord(profile)
 
