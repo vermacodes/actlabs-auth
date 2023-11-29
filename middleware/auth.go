@@ -61,13 +61,6 @@ func AdminRequired(authService entity.AuthService) gin.HandlerFunc {
 			return
 		}
 
-		// Allow all authenticated users to add 'user' role.
-		// role := c.Param("role")
-		// if role == "user" && c.Request.Method == "POST" {
-		// 	c.Next()
-		// 	return
-		// }
-
 		// Get the roles for the calling user
 		profile, err := authService.GetProfile(callingUserPrincipal)
 		if err != nil {

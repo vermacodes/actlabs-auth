@@ -10,27 +10,27 @@ var SasToken string
 var StorageAccountName string
 
 type Profile struct {
-	ObjectId        string   `json:"objectId"`
-	UserPrincipal   string   `json:"userPrincipal"`
-	DisplayName     string   `json:"displayName"`
-	ProfilePhotoUrl string   `json:"profilePhotoUrl"`
-	Roles           []string `json:"roles"`
+	ObjectId      string   `json:"objectId"`
+	UserPrincipal string   `json:"userPrincipal"`
+	DisplayName   string   `json:"displayName"`
+	ProfilePhoto  string   `json:"profilePhoto"`
+	Roles         []string `json:"roles"`
 }
 
 // Azure storage table doesn't support adding an array of strings. Thus, the hack.
 // This is not the best way to do it, but it works for now.
 type ProfileRecord struct {
-	PartitionKey    string `json:"PartitionKey"`
-	RowKey          string `json:"RowKey"`
-	ObjectId        string `json:"ObjectId"`
-	UserPrincipal   string `json:"UserPrincipal"`
-	DisplayName     string `json:"DisplayName"`
-	ProfilePhotoUrl string `json:"ProfilePhotoUrl"`
-	Roles           string `json:"Roles"`
+	PartitionKey  string `json:"PartitionKey"`
+	RowKey        string `json:"RowKey"`
+	ObjectId      string `json:"ObjectId"`
+	UserPrincipal string `json:"UserPrincipal"`
+	DisplayName   string `json:"DisplayName"`
+	ProfilePhoto  string `json:"ProfilePhoto"`
+	Roles         string `json:"Roles"`
 }
 
 type AuthService interface {
-	// Get Profile
+	CreateProfile(profile Profile) error
 	GetProfile(userPrincipal string) (Profile, error)
 	GetAllProfiles() ([]Profile, error)
 	DeleteRole(userPrincipal string, role string) error
@@ -38,7 +38,7 @@ type AuthService interface {
 }
 
 type AuthHandler interface {
-	// Get Roles
+	CreateProfile(c *gin.Context)
 	GetProfile(c *gin.Context)
 	GetAllProfiles(c *gin.Context)
 	DeleteRole(c *gin.Context)

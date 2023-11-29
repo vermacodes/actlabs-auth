@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slog"
 )
 
 type AuthHandler struct {
@@ -20,7 +19,7 @@ func NewAuthHandler(r *gin.RouterGroup, authService entity.AuthService) {
 	}
 
 	r.GET("/profiles/:userPrincipal", handler.GetProfile)
-	r.POST("/profiles/default", handler.AddDefaultProfile)
+	r.POST("/profiles", handler.CreateProfile)
 }
 
 func NewAdminAuthHandler(r *gin.RouterGroup, authService entity.AuthService) {
@@ -76,7 +75,14 @@ func (h *AuthHandler) AddRole(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (h *AuthHandler) AddDefaultProfile(c *gin.Context) {
+func (h *AuthHandler) CreateProfile(c *gin.Context) {
+
+	profile := entity.Profile{}
+
+	if err := c.ShouldBindJSON(&profile); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	// Get the auth token from the request header
 	authToken := c.GetHeader("Authorization")
@@ -87,8 +93,18 @@ func (h *AuthHandler) AddDefaultProfile(c *gin.Context) {
 	userPrincipal, _ := helper.GetUserPrincipalFromMSALAuthToken(authToken)
 	role := "user"
 
-	slog.Info("Adding default role: " + role + " for user: " + userPrincipal)
-	err := h.authService.AddRole(userPrincipal, role)
+	// Ensure that the calling user is adding their own profile.
+	if userPrincipal != profile.UserPrincipal {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userPrincipal in the request body does not match the calling user"})
+		return
+	}
+
+	// Ensure that the calling user is adding the user role.
+	if !helper.Contains(profile.Roles, role) {
+		profile.Roles = append(profile.Roles, role)
+	}
+
+	err := h.authService.CreateProfile(profile)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

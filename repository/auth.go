@@ -88,10 +88,10 @@ func (r *AuthRepository) GetAllProfiles() ([]entity.Profile, error) {
 				profile.DisplayName = ""
 			}
 
-			if value, ok := myEntity.Properties["ProfilePhotoUrl"]; ok {
-				profile.ProfilePhotoUrl = value.(string)
+			if value, ok := myEntity.Properties["ProfilePhoto"]; ok {
+				profile.ProfilePhoto = value.(string)
 			} else {
-				profile.ProfilePhotoUrl = ""
+				profile.ProfilePhoto = ""
 			}
 
 			if value, ok := myEntity.Properties["UserPrincipal"]; ok {

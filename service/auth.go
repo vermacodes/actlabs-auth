@@ -3,6 +3,7 @@ package service
 import (
 	"actlabs-auth/entity"
 	"actlabs-auth/helper"
+	"errors"
 
 	"golang.org/x/exp/slog"
 )
@@ -25,15 +26,23 @@ func (s *AuthService) CreateProfile(profile entity.Profile) error {
 	existingProfile, err := s.authRepository.GetProfile(profile.UserPrincipal)
 	if err != nil {
 		slog.Error("Error getting existing profile: ", err)
+		return err
 	}
 
-	if existingProfile.ObjectId != "" {
+	//Make sure that profile is complete
+	if profile.DisplayName == "" || profile.UserPrincipal == "" {
+		slog.Error("Error creating profile: profile is incomplete", nil)
+		return errors.New("profile is incomplete")
+	}
+
+	// if the user already exists, then update the profile with existing roles
+	if existingProfile.UserPrincipal != "" {
 		slog.Debug("Profile already exists for user : " + profile.DisplayName)
-		return nil
+		profile.Roles = existingProfile.Roles
 	}
 
 	// Create the profile
-	slog.Debug("Creating profile for user : " + profile.DisplayName)
+	slog.Debug("Creating/Updating profile for user : " + profile.DisplayName)
 	return s.authRepository.UpsertProfile(profile)
 }
 
@@ -42,14 +51,6 @@ func (s *AuthService) GetProfile(userPrincipal string) (entity.Profile, error) {
 	profile, err := s.authRepository.GetProfile(userPrincipal)
 	if err != nil {
 		slog.Error("Error getting profile: ", err)
-	}
-
-	// if roles does not contain user role then add it
-	if !helper.Contains(profile.Roles, "user") {
-		profile.Roles = append(profile.Roles, "user")
-		if err := s.authRepository.UpsertProfile(profile); err != nil {
-			slog.Error("Error adding 'user' role: ", err)
-		}
 	}
 
 	return profile, err
