@@ -8,6 +8,8 @@ import (
 	"os/exec"
 
 	"actlabs-auth/entity"
+
+	"golang.org/x/exp/slog"
 )
 
 type labRepository struct{}
@@ -44,15 +46,22 @@ func (l *labRepository) GetEnumerationResults(typeOfLab string, includeVersions 
 	return er, nil
 }
 
-func (l *labRepository) GetLab(name string, typeOfLab string, versionId string) (entity.LabType, error) {
+func (l *labRepository) GetLab(typeOfLab string, labId string, versionId string) (entity.LabType, error) {
 	lab := entity.LabType{}
 
+	// if labId is doesn't end in .json then append it
+	if len(labId) < 5 || labId[len(labId)-5:] != ".json" {
+		labId = labId + ".json"
+	}
+
 	// URL of the blob with SAS token.
-	url := "https://" + entity.StorageAccountName + ".blob.core.windows.net/repro-project-" + typeOfLab + "/" + name + "" + entity.SasToken
+	url := "https://" + entity.StorageAccountName + ".blob.core.windows.net/repro-project-" + typeOfLab + "/" + labId + "" + entity.SasToken
 
 	if versionId != "" {
 		url = url + "&versionid=" + versionId
 	}
+
+	slog.Debug("GetLab: " + url)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -70,12 +79,14 @@ func (l *labRepository) GetLab(name string, typeOfLab string, versionId string) 
 	return lab, nil
 }
 
-func (l *labRepository) AddLab(labId string, lab string, typeOfLab string) error {
-	_, err := exec.Command("bash", "-c", "echo '"+lab+"' | az storage blob upload --data @- -c repro-project-"+typeOfLab+"s -n "+labId+".json --account-name "+entity.StorageAccountName+" --sas-token '"+entity.SasToken+"' --overwrite").Output()
+// Create or add a new version of lab.
+func (l *labRepository) UpsertLab(labId string, lab string, typeOfLab string) error {
+	_, err := exec.Command("bash", "-c", "echo '"+lab+"' | az storage blob upload --data @- -c repro-project-"+typeOfLab+" -n "+labId+".json --account-name "+entity.StorageAccountName+" --sas-token '"+entity.SasToken+"' --overwrite").Output()
 	return err
 }
 
-func (l *labRepository) DeleteLab(labId string, typeOfLab string) error {
-	_, err := exec.Command("bash", "-c", "az storage blob delete -c repro-project-"+typeOfLab+"s -n "+labId+".json --account-name "+entity.StorageAccountName+" --sas-token '"+entity.SasToken+"'").Output()
+// Deletes all versions of lab.
+func (l *labRepository) DeleteLab(typeOfLab string, labId string) error {
+	_, err := exec.Command("bash", "-c", "az storage blob delete -c repro-project-"+typeOfLab+" -n "+labId+".json --account-name "+entity.StorageAccountName+" --sas-token '"+entity.SasToken+"'").Output()
 	return err
 }

@@ -15,6 +15,19 @@ import (
 
 func UpdateCredits() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		// if calling method is GET or DELETE, then no need to update credits
+		if c.Request.Method == http.MethodGet || c.Request.Method == http.MethodDelete {
+			c.Next()
+			return
+		}
+
+		// if calling method is not for /lab endpoint, then no need to update credits
+		if !strings.Contains(c.Request.URL.Path, "/lab") {
+			c.Next()
+			return
+		}
+
 		slog.Debug("Middleware: UpdateCredits")
 
 		// Get the auth token from the request header
@@ -45,8 +58,6 @@ func UpdateCredits() gin.HandlerFunc {
 			lab.UpdatedOn = helper.GetTodaysDateString()
 		}
 
-		slog.Debug("Updated lab", "lab", lab)
-
 		// update request payload
 		marshaledLab, err := json.Marshal(lab)
 		if err != nil {
@@ -61,9 +72,6 @@ func UpdateCredits() gin.HandlerFunc {
 
 		// Replace the current request with the new request
 		c.Request = newRequest
-
-		slog.Debug("Updated request", "request", c.Request)
-
 		c.Next()
 	}
 }

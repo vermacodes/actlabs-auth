@@ -50,12 +50,12 @@ func (a *assignmentService) GetAssignmentsByUserId(userId string) ([]entity.Assi
 }
 
 func (a *assignmentService) GetAllLabsRedacted() ([]entity.LabType, error) {
-	readinessLabsRedacted := []entity.LabType{}
+	readinessLabRedacted := []entity.LabType{}
 
-	labs, err := a.labService.GetPublicLabs("readinesslabs")
+	labs, err := a.labService.GetProtectedLabs("readinesslab")
 	if err != nil {
 		slog.Error("not able to get readiness labs", err)
-		return readinessLabsRedacted, err
+		return readinessLabRedacted, err
 	}
 
 	for _, lab := range labs {
@@ -64,10 +64,10 @@ func (a *assignmentService) GetAllLabsRedacted() ([]entity.LabType, error) {
 		lab.Description = "<p>" + lab.Name + "</p>"
 		lab.Type = "assignment"
 		lab.Tags = []string{"assignment"}
-		readinessLabsRedacted = append(readinessLabsRedacted, lab)
+		readinessLabRedacted = append(readinessLabRedacted, lab)
 	}
 
-	return readinessLabsRedacted, nil
+	return readinessLabRedacted, nil
 }
 
 func (a *assignmentService) GetAssignedLabsRedactedByUserId(userId string) ([]entity.LabType, error) {
@@ -79,17 +79,18 @@ func (a *assignmentService) GetAssignedLabsRedactedByUserId(userId string) ([]en
 		return assignedLabs, err
 	}
 
-	labs, err := a.labService.GetPublicLabs("readinesslabs")
+	labs, err := a.labService.GetProtectedLabs("readinesslab")
 	if err != nil {
 		slog.Error("not able to get readiness labs", err)
 		return assignedLabs, err
 	}
 
 	for _, assignment := range assignments {
-		slog.Info("Lab ID : " + assignment.LabId)
+		slog.Debug("Lab ID : " + assignment.LabId)
 		for _, lab := range labs {
-			slog.Info("Lab ID : " + lab.Name)
+			slog.Debug("Checking Lab Name : " + lab.Name)
 			if assignment.LabId == lab.Id {
+				slog.Debug("Assignment ID : " + assignment.AssignmentId + " is for lab " + lab.Name)
 				if assignment.UserId == userId {
 					lab.ExtendScript = "redacted"
 					lab.Description = "<p>" + lab.Name + "</p>"

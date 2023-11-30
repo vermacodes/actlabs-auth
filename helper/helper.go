@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 	"unsafe"
@@ -47,6 +48,21 @@ func Contains(slice []string, str string) bool {
 		}
 	}
 	return false
+}
+
+// SlicesAreEqual checks if two slices are equal.
+func SlicesAreEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	sort.Strings(a)
+	sort.Strings(b)
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func GetUserPrincipalFromMSALAuthToken(token string) (string, error) {

@@ -45,32 +45,34 @@ func main() {
 
 	authRouter.Use(middleware.AuthRequired())
 
-	labService := service.NewLabService(repository.NewLabRepository())
-	handler.NewLabHandler(authRouter, labService)
-
 	authService := service.NewAuthService(repository.NewAuthRepository())
 	handler.NewAuthHandler(authRouter, authService)
 
 	loggingService := service.NewLoggingService(repository.NewLoggingRepository())
 	handler.NewLoggingHandler(authRouter, loggingService)
 
-	adminAuthRouter := authRouter.Group("/")
-	adminAuthRouter.Use(middleware.AdminRequired(authService))
-	handler.NewAdminAuthHandler(adminAuthRouter, authService)
+	authRouter.Use(middleware.UpdateCredits())
+	labService := service.NewLabService(repository.NewLabRepository())
+	handler.NewLabHandler(authRouter, labService)
 
-	// mentor required
-	mentorAuthRouter := authRouter.Group("/")
-	mentorAuthRouter.Use(middleware.MentorRequired(authService))
-	handler.NewLabHandlerMentorRequired(mentorAuthRouter, labService)
+	// admin required
+	adminRouter := authRouter.Group("/")
+	adminRouter.Use(middleware.AdminRequired(authService))
+	handler.NewAdminAuthHandler(adminRouter, authService)
+
+	// mentor required & update credits
+	mentorRouter := authRouter.Group("/")
+	mentorRouter.Use(middleware.MentorRequired(authService), middleware.UpdateCredits())
+	handler.NewLabHandlerMentorRequired(mentorRouter, labService)
 
 	// apply middleware to all POST requests.
-	labMentorAuthRouter := mentorAuthRouter.Group("/")
-	labMentorAuthRouter.Use(middleware.UpdateCredits())
-	handler.NewLabHandlerMentorRequiredWithCreditMiddleware(labMentorAuthRouter, labService)
+	contributorRouter := authRouter.Group("/")
+	contributorRouter.Use(middleware.UpdateCredits())
+	handler.NewLabHandlerContributorRequired(contributorRouter, labService)
 
 	assignmentService := service.NewAssignmentService(repository.NewAssignmentRepository(), labService)
 	handler.NewAssignmentHandler(authRouter, assignmentService)
-	handler.NewAssignmentHandlerMentorRequired(mentorAuthRouter, assignmentService)
+	handler.NewAssignmentHandlerMentorRequired(mentorRouter, assignmentService)
 
 	router.Run()
 }
