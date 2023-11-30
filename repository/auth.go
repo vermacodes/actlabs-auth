@@ -140,7 +140,7 @@ func (r *AuthRepository) UpsertProfile(profile entity.Profile) error {
 		return err
 	}
 
-	slog.Info("Adding or Updating entity: " + string(marshalledPrincipalRecord))
+	slog.Info("Adding or Updating entity")
 
 	_, err = serviceClient.UpsertEntity(context.TODO(), marshalledPrincipalRecord, nil)
 	if err != nil {
