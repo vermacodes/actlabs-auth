@@ -93,7 +93,7 @@ func (a *assignmentService) GetAssignedLabsRedactedByUserId(userId string) ([]en
 				slog.Debug("Assignment ID : " + assignment.AssignmentId + " is for lab " + lab.Name)
 				if assignment.UserId == userId {
 					lab.ExtendScript = "redacted"
-					lab.Description = "<p>" + lab.Name + "</p>"
+					lab.Description = lab.Message // Replace description with message fro redacted labs
 					lab.Type = "assignment"
 					lab.Tags = []string{"assignment"}
 					assignedLabs = append(assignedLabs, lab)
