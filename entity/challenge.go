@@ -8,15 +8,9 @@ type Challenge struct {
 	LabId        string `json:"labId"`
 	CreatedBy    string `json:"createdBy"`
 	CreatedOn    string `json:"createdOn"`
+	AcceptedOn   string `json:"acceptedOn"`
 	CompletedOn  string `json:"completedOn"`
 	Status       string `json:"status"`
-}
-
-type ChallengeLab struct {
-	PartitionKey string `json:"PartitionKey"`
-	RowKey       string `json:"RowKey"`
-	LabId        string `json:"labId"`
-	Owners       string `json:"owners"`
 }
 
 type BulkChallenge struct {
