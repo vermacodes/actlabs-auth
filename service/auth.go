@@ -60,6 +60,27 @@ func (s *AuthService) GetProfile(userPrincipal string) (entity.Profile, error) {
 	return profile, err
 }
 
+func (s *AuthService) GetAllProfilesRedacted() ([]entity.Profile, error) {
+	slog.Info("Getting all profiles")
+
+	profiles, err := s.authRepository.GetAllProfiles()
+	if err != nil {
+		slog.Error("Error getting profiles: ", err)
+		return []entity.Profile{}, err
+	}
+
+	redactedProfiles := []entity.Profile{}
+	for _, profile := range profiles {
+		redactedProfile := entity.Profile{
+			DisplayName:   profile.DisplayName,
+			ProfilePhoto:  profile.ProfilePhoto,
+			UserPrincipal: profile.UserPrincipal,
+		}
+		redactedProfiles = append(redactedProfiles, redactedProfile)
+	}
+	return redactedProfiles, err
+}
+
 func (s *AuthService) GetAllProfiles() ([]entity.Profile, error) {
 	slog.Info("Getting all profiles")
 	profiles, err := s.authRepository.GetAllProfiles()

@@ -20,6 +20,7 @@ func NewAuthHandler(r *gin.RouterGroup, authService entity.AuthService) {
 
 	r.GET("/profiles/:userPrincipal", handler.GetProfile)
 	r.POST("/profiles", handler.CreateProfile)
+	r.GET("/profilesRedacted", handler.GetAllProfilesRedacted)
 }
 
 func NewAdminAuthHandler(r *gin.RouterGroup, authService entity.AuthService) {
@@ -53,6 +54,15 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, profile)
+}
+
+func (h *AuthHandler) GetAllProfilesRedacted(c *gin.Context) {
+	profiles, err := h.authService.GetAllProfilesRedacted()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, profiles)
 }
 
 func (h *AuthHandler) GetAllProfiles(c *gin.Context) {

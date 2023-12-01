@@ -41,6 +41,10 @@ type AuthService interface {
 	GetProfile(userPrincipal string) (Profile, error)
 
 	// Get all profiles
+	// Privilege: User
+	GetAllProfilesRedacted() ([]Profile, error)
+
+	// Get all profiles
 	// Privilege: Admin
 	GetAllProfiles() ([]Profile, error)
 
