@@ -96,6 +96,17 @@ func (c *challengeService) GetChallengesByUserId(userId string) ([]entity.Challe
 	return challenges, nil
 }
 
+func (c *challengeService) UpsertChallenge(challenge entity.Challenge) error {
+
+	// Is createdBy owner or editor of the lab?
+	// OR
+	// Has createdBy completed the challenge? Yes? Have they challenged this to two people already? Yes? Return error.
+	if err := c.challengeRepository.UpsertChallenge(challenge); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *challengeService) CreateChallenges(userIds []string, labIds []string, createdBy string) error {
 
 	for _, userId := range userIds {
