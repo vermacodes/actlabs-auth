@@ -67,7 +67,7 @@ func (l *labHandler) GetLabs(c *gin.Context) {
 		// Remove Bearer from the authToken
 		authToken = strings.Split(authToken, "Bearer ")[1]
 		userId, _ := helper.GetUserPrincipalFromMSALAuthToken(authToken)
-		labs, err = l.labService.GetPrivateLab(typeOfLab, userId)
+		labs, err = l.labService.GetPrivateLabs(typeOfLab, userId)
 	case validateLabType(typeOfLab, entity.PublicLab):
 		labs, err = l.labService.GetPublicLab(typeOfLab)
 	case validateLabType(typeOfLab, entity.ProtectedLabs):

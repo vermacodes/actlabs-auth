@@ -21,7 +21,17 @@ func NewLabService(repo entity.LabRepository) entity.LabService {
 	}
 }
 
-func (l *labService) GetPrivateLab(typeOfLab string, userId string) ([]entity.LabType, error) {
+func (l *labService) GetAllPrivateLabs(typeOfLab string) ([]entity.LabType, error) {
+
+	labs, err := l.GetLabs(typeOfLab)
+	if err != nil {
+		slog.Error("Not able to get private labs", err)
+	}
+
+	return labs, nil
+}
+
+func (l *labService) GetPrivateLabs(typeOfLab string, userId string) ([]entity.LabType, error) {
 	// Public labs must only be shown to users who own them.
 	labs, err := l.GetLabs(typeOfLab)
 	if err != nil {
