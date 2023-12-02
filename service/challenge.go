@@ -22,24 +22,24 @@ func NewChallengeService(challengeRepository entity.ChallengeRepository, labServ
 }
 
 func (a *challengeService) GetAllLabsRedacted() ([]entity.LabType, error) {
-	readinessLabRedacted := []entity.LabType{}
+	challengeLabRedacted := []entity.LabType{}
 
-	labs, err := a.labService.GetAllPrivateLabs("challengelabs")
+	labs, err := a.labService.GetAllPrivateLabs("challengelab")
 	if err != nil {
-		slog.Error("not able to get readiness labs", err)
-		return readinessLabRedacted, err
+		slog.Error("not able to get challenge labs", err)
+		return challengeLabRedacted, err
 	}
 
 	for _, lab := range labs {
 		slog.Debug("Lab ID : " + lab.Name)
 		lab.ExtendScript = "redacted"
-		lab.Description = "<p>" + lab.Name + "</p>"
-		lab.Type = "assignment"
-		lab.Tags = []string{"assignment"}
-		readinessLabRedacted = append(readinessLabRedacted, lab)
+		lab.Description = lab.Message //Replace description with message
+		lab.Type = "challenge"
+		lab.Tags = []string{"challenge"}
+		challengeLabRedacted = append(challengeLabRedacted, lab)
 	}
 
-	return readinessLabRedacted, nil
+	return challengeLabRedacted, nil
 }
 
 func (c *challengeService) GetChallengesLabsRedactedByUserId(userId string) ([]entity.LabType, error) {
@@ -51,23 +51,18 @@ func (c *challengeService) GetChallengesLabsRedactedByUserId(userId string) ([]e
 		return challengeLabs, err
 	}
 
-	labs, err := c.labService.GetPrivateLabs("challengelabs", userId)
+	redactedLabs, err := c.GetAllLabsRedacted()
 	if err != nil {
-		slog.Error("not able to get challenge labs", err)
+		slog.Error("not able to get redacted labs", err)
 		return challengeLabs, err
 	}
 
 	for _, challenge := range challenges {
 		slog.Debug("Challenge ID : " + challenge.ChallengeId)
-		for _, lab := range labs {
+		for _, lab := range redactedLabs {
 			slog.Debug("Checking lab Name : " + lab.Name)
 			if challenge.LabId == lab.Id && challenge.UserId == userId {
 				slog.Debug("Challenge Id " + challenge.ChallengeId + " matches with lab Name " + lab.Name + " for user " + userId)
-				slog.Debug("Lab ID : " + lab.Name)
-				lab.ExtendScript = "redacted"
-				lab.Description = lab.Message //Replace description with message
-				lab.Type = "challenge"
-				lab.Tags = []string{"challenge"}
 				challengeLabs = append(challengeLabs, lab)
 				break
 			}
@@ -131,7 +126,7 @@ func (c *challengeService) CreateChallenges(userIds []string, labIds []string, c
 				LabId:        labId,
 				CreatedBy:    createdBy,
 				CreatedOn:    helper.GetTodaysDateTimeString(),
-				Status:       "assigned",
+				Status:       "challenged",
 			}
 
 			if err := c.challengeRepository.UpsertChallenge(challenge); err != nil {
@@ -139,7 +134,7 @@ func (c *challengeService) CreateChallenges(userIds []string, labIds []string, c
 				return err
 			}
 
-			slog.Debug("Assigned lab " + labId + " to user " + userId)
+			slog.Debug(userId + " challenged to solve lab " + labId)
 		}
 	}
 

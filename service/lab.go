@@ -23,6 +23,11 @@ func NewLabService(repo entity.LabRepository) entity.LabService {
 
 func (l *labService) GetAllPrivateLabs(typeOfLab string) ([]entity.LabType, error) {
 
+	if typeOfLab != "challengelab" {
+		slog.Error("Only challenge labs are allowed via this function", nil)
+		return []entity.LabType{}, errors.New("only challenge labs are allowed via this function")
+	}
+
 	labs, err := l.GetLabs(typeOfLab)
 	if err != nil {
 		slog.Error("Not able to get private labs", err)
