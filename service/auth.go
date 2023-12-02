@@ -26,7 +26,6 @@ func (s *AuthService) CreateProfile(profile entity.Profile) error {
 	existingProfile, err := s.authRepository.GetProfile(profile.UserPrincipal)
 	if err != nil {
 		slog.Error("Error getting existing profile: ", err)
-		return err
 	}
 
 	//Make sure that profile is complete
