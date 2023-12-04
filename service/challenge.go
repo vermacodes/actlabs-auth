@@ -4,6 +4,7 @@ import (
 	"actlabs-auth/entity"
 	"actlabs-auth/helper"
 	"errors"
+	"fmt"
 	"strings"
 
 	"golang.org/x/exp/slog"
@@ -96,15 +97,22 @@ func (c *challengeService) GetChallengesByUserId(userId string) ([]entity.Challe
 	return challenges, nil
 }
 
-func (c *challengeService) UpsertChallenge(challenge entity.Challenge) error {
+func (c *challengeService) UpsertChallenges(challenges []entity.Challenge) error {
 
 	// Is createdBy owner or editor of the lab?
 	// OR
 	// Has createdBy completed the challenge? Yes? Have they challenged this to two people already? Yes? Return error.
-	if err := c.challengeRepository.UpsertChallenge(challenge); err != nil {
-		return err
+
+	var _err error
+
+	for _, challenge := range challenges {
+		if err := c.challengeRepository.UpsertChallenge(challenge); err != nil {
+			slog.Error(fmt.Sprintf("Not able to challenge %s for lab %s", challenge.UserId, challenge.LabId), err)
+			_err = err
+		}
 	}
-	return nil
+
+	return _err
 }
 
 func (c *challengeService) CreateChallenges(userIds []string, labIds []string, createdBy string) error {
@@ -132,7 +140,7 @@ func (c *challengeService) CreateChallenges(userIds []string, labIds []string, c
 			challenge := entity.Challenge{
 				PartitionKey: userId,
 				RowKey:       labId,
-				ChallengeId:  userId + "-" + labId,
+				ChallengeId:  userId + "+" + labId,
 				UserId:       userId,
 				LabId:        labId,
 				CreatedBy:    createdBy,

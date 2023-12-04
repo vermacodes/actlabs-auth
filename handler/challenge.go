@@ -22,7 +22,8 @@ func NewChallengeHandler(r *gin.RouterGroup, service entity.ChallengeService) {
 	r.GET("/challenge/labs/my", handler.GetMyChallengeLabsRedacted)
 	r.GET("/challenge", handler.GetAllChallenges)
 	r.GET("/challenge/my", handler.GetMyChallenges)
-	r.POST("/challenge", handler.UpsertChallenge)
+	r.GET("/challenge/lab/:labId", handler.GetChallengesByLabId)
+	r.POST("/challenge", handler.UpsertChallenges)
 	r.DELETE("/challenge/:challengeId", handler.DeleteChallenge)
 }
 
@@ -45,7 +46,7 @@ func (ch *challengeHandler) GetMyChallengeLabsRedacted(c *gin.Context) {
 	//Get the user principal from the auth token
 	userId, _ := helper.GetUserPrincipalFromMSALAuthToken(authToken)
 
-	labs, err := ch.challengeService.GetChallengesByUserId(userId)
+	labs, err := ch.challengeService.GetChallengesLabsRedactedByUserId(userId)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
@@ -81,19 +82,32 @@ func (ch *challengeHandler) GetMyChallenges(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, challenges)
 }
 
-func (ch *challengeHandler) UpsertChallenge(c *gin.Context) {
-	challenge := entity.Challenge{}
-	if err := c.BindJSON(&challenge); err != nil {
-		c.Status(http.StatusBadRequest)
-		return
-	}
+func (ch *challengeHandler) GetChallengesByLabId(c *gin.Context) {
 
-	if err := ch.challengeService.UpsertChallenge(challenge); err != nil {
+	labId := c.Param("labId")
+
+	challenges, err := ch.challengeService.GetChallengesByLabId(labId)
+	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, challenge)
+	c.IndentedJSON(http.StatusOK, challenges)
+}
+
+func (ch *challengeHandler) UpsertChallenges(c *gin.Context) {
+	challenges := []entity.Challenge{}
+	if err := c.BindJSON(&challenges); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	if err := ch.challengeService.UpsertChallenges(challenges); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to create/update one or more challenges"})
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
 func (ch *challengeHandler) DeleteChallenge(c *gin.Context) {

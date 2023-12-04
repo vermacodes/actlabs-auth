@@ -21,7 +21,7 @@ func (r *loggingRepository) OperationRecord(operation entity.Operation, userPrin
 
 	operationRecord := entity.OperationRecord{
 		PartitionKey:    userPrincipal,
-		RowKey:          operation.OperationId + "-" + operation.OperationType + "-" + operation.OperationStatus,
+		RowKey:          operation.OperationId + "+" + operation.OperationType + "+" + operation.OperationStatus,
 		UserPrincipal:   userPrincipal,
 		OperationId:     operation.OperationId,
 		OperationStatus: operation.OperationStatus,

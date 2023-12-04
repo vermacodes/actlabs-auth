@@ -129,7 +129,7 @@ func (a *assignmentService) CreateAssignments(userIds []string, labIds []string,
 			assignment := entity.Assignment{
 				PartitionKey: userId,
 				RowKey:       labId,
-				AssignmentId: userId + "-" + labId,
+				AssignmentId: userId + "+" + labId,
 				UserId:       userId,
 				LabId:        labId,
 				CreatedBy:    createdBy,

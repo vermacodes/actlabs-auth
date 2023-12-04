@@ -44,7 +44,7 @@ type ChallengeService interface {
 
 	// UpsertChallenges upsert challenge.
 	// Returns any error encountered.
-	UpsertChallenge(Challenge Challenge) error
+	UpsertChallenges(Challenges []Challenge) error
 
 	// CreateChallenges creates new challenges for a set of users and labs.
 	// userIds: The IDs of the users.

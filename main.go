@@ -51,8 +51,14 @@ func main() {
 	loggingService := service.NewLoggingService(repository.NewLoggingRepository())
 	handler.NewLoggingHandler(authRouter, loggingService)
 
-	authRouter.Use(middleware.UpdateCredits())
 	labService := service.NewLabService(repository.NewLabRepository())
+	challengeService := service.NewChallengeService(repository.NewChallengeRepository(), labService)
+
+	challengeRouter := authRouter.Group("/")
+	challengeRouter.Use(middleware.ChallengeMiddleware())
+	handler.NewChallengeHandler(challengeRouter, challengeService)
+
+	authRouter.Use(middleware.UpdateCredits())
 	handler.NewLabHandler(authRouter, labService)
 
 	// admin required

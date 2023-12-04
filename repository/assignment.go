@@ -107,7 +107,7 @@ func (a *assignmentRepository) DeleteAssignment(assignmentId string) error {
 
 	slog.Debug("Deleting assignment: ", assignmentId)
 
-	userId := assignmentId[:strings.Index(assignmentId, "-")]
+	userId := assignmentId[:strings.Index(assignmentId, "+")]
 
 	getServiceClient := getServiceClient().NewClient("ReadinessAssignments")
 	_, err := getServiceClient.DeleteEntity(context.Background(), userId, assignmentId, nil)

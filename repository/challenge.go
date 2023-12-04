@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/google/uuid"
 	"golang.org/x/exp/slog"
 )
 
@@ -103,7 +104,7 @@ func (c *challengeRepository) DeleteChallenge(challengeId string) error {
 
 	slog.Debug("Deleting challenge: " + challengeId)
 
-	userId := challengeId[:strings.Index(challengeId, "-")]
+	userId := strings.SplitN(challengeId, "+", 2)[1]
 
 	getServiceClient().NewClient("Challenges").DeleteEntity(context.Background(), userId, challengeId, nil)
 	_, err := getServiceClient().NewClient("Challenges").DeleteEntity(context.Background(), userId, challengeId, nil)
@@ -119,8 +120,12 @@ func (c *challengeRepository) DeleteChallenge(challengeId string) error {
 func (c *challengeRepository) UpsertChallenge(challenge entity.Challenge) error {
 	serviceClient := getServiceClient().NewClient("Challenges")
 
-	challenge.PartitionKey = challenge.UserId
-	challenge.RowKey = challenge.ChallengeId
+	if challenge.ChallengeId == "" {
+		challenge.ChallengeId = uuid.NewString()
+	}
+
+	challenge.PartitionKey = challenge.LabId
+	challenge.RowKey = challenge.UserId + "+" + challenge.LabId
 
 	val, err := json.Marshal(challenge)
 	if err != nil {

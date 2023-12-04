@@ -36,6 +36,9 @@ fi
 
 echo "Storage Account -> ${STORAGE_ACCOUNT_NAME}"
 
+# Remove existing binary.
+rm actlabs-auth
+
 go build -ldflags "-X 'actlabs-auth/entity.SasToken=$SAS_TOKEN' -X 'actlabs-auth/entity.StorageAccountName=$STORAGE_ACCOUNT_NAME'"
 
 redis-cli flushall && export LOG_LEVEL="${LOG_LEVEL}" && export PORT="8882" && ./actlabs-auth
