@@ -55,7 +55,7 @@ func ChallengeMiddleware() gin.HandlerFunc {
 		for _, challenge := range challenges {
 			if challenge.ChallengeId == "" {
 				challenge.CreatedBy = callingUserPrincipal
-				challenge.CreatedOn = helper.GetTodaysDateString()
+				challenge.CreatedOn = helper.GetTodaysDateTimeISOString()
 			}
 			updatedChallenges = append(updatedChallenges, challenge)
 		}

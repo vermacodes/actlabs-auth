@@ -266,6 +266,11 @@ func GetTodaysDateTimeString() string {
 	return time.Now().Format("2006-01-02 15:04:05")
 }
 
+// Return today's date and time in ISO format as string
+func GetTodaysDateTimeISOString() string {
+	return time.Now().Format(time.RFC3339)
+}
+
 // ConvertProfileToRecord converts a Profile to a ProfileRecord.
 func ConvertProfileToRecord(profile entity.Profile) entity.ProfileRecord {
 	return entity.ProfileRecord{
