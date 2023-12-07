@@ -1,12 +1,14 @@
 package helper
 
 import (
+	"actlabs-auth/entity"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 	"unsafe"
@@ -46,6 +48,21 @@ func Contains(slice []string, str string) bool {
 		}
 	}
 	return false
+}
+
+// SlicesAreEqual checks if two slices are equal.
+func SlicesAreEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	sort.Strings(a)
+	sort.Strings(b)
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func GetUserPrincipalFromMSALAuthToken(token string) (string, error) {
@@ -247,4 +264,33 @@ func GetTodaysDateString() string {
 // Return today's date and time in the format yyyy-mm-dd hh:mm:ss as string
 func GetTodaysDateTimeString() string {
 	return time.Now().Format("2006-01-02 15:04:05")
+}
+
+// Return today's date and time in ISO format as string
+func GetTodaysDateTimeISOString() string {
+	return time.Now().Format(time.RFC3339)
+}
+
+// ConvertProfileToRecord converts a Profile to a ProfileRecord.
+func ConvertProfileToRecord(profile entity.Profile) entity.ProfileRecord {
+	return entity.ProfileRecord{
+		PartitionKey:  "actlabs",             // this is a static value.
+		RowKey:        profile.UserPrincipal, // UserPrincipal is the unique identifier for the user.
+		ObjectId:      profile.ObjectId,
+		UserPrincipal: profile.UserPrincipal,
+		DisplayName:   profile.DisplayName,
+		ProfilePhoto:  profile.ProfilePhoto,
+		Roles:         strings.Join(profile.Roles, ","),
+	}
+}
+
+// ConvertRecordToProfile converts a ProfileRecord to a Profile.
+func ConvertRecordToProfile(record entity.ProfileRecord) entity.Profile {
+	return entity.Profile{
+		ObjectId:      record.ObjectId,
+		UserPrincipal: record.UserPrincipal,
+		DisplayName:   record.DisplayName,
+		ProfilePhoto:  record.ProfilePhoto,
+		Roles:         strings.Split(record.Roles, ","),
+	}
 }

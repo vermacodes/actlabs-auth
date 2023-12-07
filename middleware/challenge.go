@@ -13,7 +13,7 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-func UpdateCredits() gin.HandlerFunc {
+func ChallengeMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		// if calling method is GET or DELETE, then no need to update credits
@@ -23,12 +23,12 @@ func UpdateCredits() gin.HandlerFunc {
 		}
 
 		// if calling method is not for /lab endpoint, then no need to update credits
-		if !strings.Contains(c.Request.URL.Path, "/lab") {
+		if !strings.Contains(c.Request.URL.Path, "/challenge") {
 			c.Next()
 			return
 		}
 
-		slog.Debug("Middleware: UpdateCredits")
+		slog.Debug("Middleware: ChallengeMiddleware")
 
 		// Get the auth token from the request header
 		authToken := c.GetHeader("Authorization")
@@ -42,35 +42,37 @@ func UpdateCredits() gin.HandlerFunc {
 			return
 		}
 
-		// get lab from the payload
-		lab := entity.LabType{}
-		if err := c.Bind(&lab); err != nil {
+		//get challenge from the payload
+		challenges := []entity.Challenge{}
+		if err := c.Bind(&challenges); err != nil {
 			c.Status(http.StatusBadRequest)
 			return
 		}
 
+		updatedChallenges := []entity.Challenge{}
+
 		// update credits
-		if lab.Id == "" {
-			lab.CreatedBy = callingUserPrincipal
-			lab.CreatedOn = helper.GetTodaysDateString()
-		} else {
-			lab.UpdatedBy = callingUserPrincipal
-			lab.UpdatedOn = helper.GetTodaysDateString()
+		for _, challenge := range challenges {
+			if challenge.ChallengeId == "" {
+				challenge.CreatedBy = callingUserPrincipal
+				challenge.CreatedOn = helper.GetTodaysDateTimeISOString()
+			}
+			updatedChallenges = append(updatedChallenges, challenge)
 		}
 
 		// update request payload
-		marshaledLab, err := json.Marshal(lab)
+		marshaledChallenges, err := json.Marshal(updatedChallenges)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		// Create a new request based on the existing request
+		// Create a new request based on existing request
 		newRequest := c.Request.Clone(c.Request.Context())
-		newRequest.Body = io.NopCloser(bytes.NewReader(marshaledLab))
-		newRequest.ContentLength = int64(len(marshaledLab))
+		newRequest.Body = io.NopCloser(bytes.NewReader(marshaledChallenges))
+		newRequest.ContentLength = int64(len(marshaledChallenges))
 
-		// Replace the current request with the new request
+		// Replace request with newRequest
 		c.Request = newRequest
 		c.Next()
 	}

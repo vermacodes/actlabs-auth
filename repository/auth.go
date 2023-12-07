@@ -38,58 +38,84 @@ func getServiceClient() *aztables.ServiceClient {
 	return serviceClient
 }
 
-func (r *AuthRepository) GetRoles(userPrincipal string) ([]string, error) {
-	roles := []string{}
-	serviceClient := getServiceClient().NewClient("Roles")
+func (r *AuthRepository) GetProfile(userPrincipal string) (entity.Profile, error) {
+	serviceClient := getServiceClient().NewClient("Profiles")
 	principalRecord, err := serviceClient.GetEntity(context.TODO(), "actlabs", userPrincipal, nil)
 	if err != nil {
 		slog.Error("Error getting entity: ", err)
-		return roles, err
+		return entity.Profile{}, err
 	}
 
-	roleRecord := entity.RoleRecord{}
-	if err := json.Unmarshal(principalRecord.Value, &roleRecord); err != nil {
+	profileRecord := entity.ProfileRecord{}
+	if err := json.Unmarshal(principalRecord.Value, &profileRecord); err != nil {
 		slog.Error("Error unmarshal principal record: ", err)
-		return roles, err
+		return entity.Profile{}, err
 	}
 
-	return helper.StringToSlice(roleRecord.Roles), nil
+	return helper.ConvertRecordToProfile(profileRecord), nil
 }
 
-func (r *AuthRepository) GetAllRoles() ([]entity.Roles, error) {
-	roles := []entity.Roles{}
-	role := entity.Roles{}
+func (r *AuthRepository) GetAllProfiles() ([]entity.Profile, error) {
+	profiles := []entity.Profile{}
+	profile := entity.Profile{}
 
-	serviceClient := getServiceClient().NewClient("Roles")
+	serviceClient := getServiceClient().NewClient("Profiles")
 
 	pager := serviceClient.NewListEntitiesPager(nil)
 	for pager.More() {
 		response, err := pager.NextPage(context.Background())
 		if err != nil {
 			slog.Error("Error getting entities: ", err)
-			return roles, err
+			return profiles, err
 		}
 
 		for _, entity := range response.Entities {
 			var myEntity aztables.EDMEntity
 			if err := json.Unmarshal(entity, &myEntity); err != nil {
 				slog.Error("Error unmarshal principal record: ", err)
-				return roles, err
+				return profiles, err
 			}
 
-			role.UserPrincipal = myEntity.Properties["UserPrincipal"].(string)
-			role.Roles = helper.StringToSlice(myEntity.Properties["Roles"].(string))
+			if value, ok := myEntity.Properties["ObjectId"]; ok {
+				profile.ObjectId = value.(string)
+			} else {
+				profile.ObjectId = ""
+			}
 
-			roles = append(roles, role)
+			if value, ok := myEntity.Properties["DisplayName"]; ok {
+				profile.DisplayName = value.(string)
+			} else {
+				profile.DisplayName = ""
+			}
+
+			if value, ok := myEntity.Properties["ProfilePhoto"]; ok {
+				profile.ProfilePhoto = value.(string)
+			} else {
+				profile.ProfilePhoto = ""
+			}
+
+			if value, ok := myEntity.Properties["UserPrincipal"]; ok {
+				profile.UserPrincipal = value.(string)
+			} else {
+				profile.UserPrincipal = ""
+			}
+
+			if value, ok := myEntity.Properties["Roles"]; ok {
+				profile.Roles = helper.StringToSlice(value.(string))
+			} else {
+				profile.Roles = []string{}
+			}
+
+			profiles = append(profiles, profile)
 		}
 	}
 
-	return roles, nil
+	return profiles, nil
 }
 
 // Use this function to complete delete the record for UserPrincipal.
-func (r *AuthRepository) DeleteRole(userPrincipal string) error {
-	serviceClient := getServiceClient().NewClient("Roles")
+func (r *AuthRepository) DeleteProfile(userPrincipal string) error {
+	serviceClient := getServiceClient().NewClient("Profiles")
 	_, err := serviceClient.DeleteEntity(context.TODO(), "actlabs", userPrincipal, nil)
 	if err != nil {
 		slog.Error("Error deleting entity: ", err)
@@ -97,22 +123,24 @@ func (r *AuthRepository) DeleteRole(userPrincipal string) error {
 	return err
 }
 
-func (r *AuthRepository) AddRole(userPrincipal string, roles []string) error {
-	serviceClient := getServiceClient().NewClient("Roles")
-	principalRecord := entity.RoleRecord{
-		PartitionKey:  "actlabs",
-		RowKey:        userPrincipal,
-		UserPrincipal: userPrincipal,
-		Roles:         helper.SliceToString(roles),
+func (r *AuthRepository) UpsertProfile(profile entity.Profile) error {
+
+	//Make sure that profile is complete
+	if profile.DisplayName == "" || profile.UserPrincipal == "" {
+		slog.Error("Error creating profile: profile is incomplete", nil)
+		return errors.New("profile is incomplete")
 	}
 
-	marshalledPrincipalRecord, err := json.Marshal(principalRecord)
+	serviceClient := getServiceClient().NewClient("Profiles")
+	profileRecord := helper.ConvertProfileToRecord(profile)
+
+	marshalledPrincipalRecord, err := json.Marshal(profileRecord)
 	if err != nil {
 		slog.Error("Error marshalling principal record: ", err)
 		return err
 	}
 
-	slog.Info("Adding entity: " + string(marshalledPrincipalRecord))
+	slog.Info("Adding or Updating entity")
 
 	_, err = serviceClient.UpsertEntity(context.TODO(), marshalledPrincipalRecord, nil)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"actlabs-auth/middleware"
 	"actlabs-auth/repository"
 	"actlabs-auth/service"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -17,10 +18,15 @@ func main() {
 
 	// Get the log level from the environment or default to 8.
 	logLevel := os.Getenv("LOG_LEVEL")
+	fmt.Println("logLevel: ", logLevel)
+
 	logLevelInt, err := strconv.Atoi(logLevel)
 	if err != nil {
+		fmt.Println("Error converting logLevel to int: ", err)
 		logLevelInt = 0
 	}
+
+	fmt.Println("logLevelInt: ", logLevelInt)
 
 	// Create a new logger.
 	opts := slog.HandlerOptions{
@@ -45,32 +51,40 @@ func main() {
 
 	authRouter.Use(middleware.AuthRequired())
 
-	labService := service.NewLabService(repository.NewLabRepository())
-	handler.NewLabHandler(authRouter, labService)
-
 	authService := service.NewAuthService(repository.NewAuthRepository())
 	handler.NewAuthHandler(authRouter, authService)
 
 	loggingService := service.NewLoggingService(repository.NewLoggingRepository())
 	handler.NewLoggingHandler(authRouter, loggingService)
 
-	adminAuthRouter := authRouter.Group("/")
-	adminAuthRouter.Use(middleware.AdminRequired(authService))
-	handler.NewAdminAuthHandler(adminAuthRouter, authService)
+	labService := service.NewLabService(repository.NewLabRepository())
+	challengeService := service.NewChallengeService(repository.NewChallengeRepository(), labService)
 
-	// mentor required
-	mentorAuthRouter := authRouter.Group("/")
-	mentorAuthRouter.Use(middleware.MentorRequired(authService))
-	handler.NewLabHandlerMentorRequired(mentorAuthRouter, labService)
+	challengeRouter := authRouter.Group("/")
+	challengeRouter.Use(middleware.ChallengeMiddleware())
+	handler.NewChallengeHandler(challengeRouter, challengeService)
+
+	authRouter.Use(middleware.UpdateCredits())
+	handler.NewLabHandler(authRouter, labService)
+
+	// admin required
+	adminRouter := authRouter.Group("/")
+	adminRouter.Use(middleware.AdminRequired(authService))
+	handler.NewAdminAuthHandler(adminRouter, authService)
+
+	// mentor required & update credits
+	mentorRouter := authRouter.Group("/")
+	mentorRouter.Use(middleware.MentorRequired(authService), middleware.UpdateCredits())
+	handler.NewLabHandlerMentorRequired(mentorRouter, labService)
 
 	// apply middleware to all POST requests.
-	labMentorAuthRouter := mentorAuthRouter.Group("/")
-	labMentorAuthRouter.Use(middleware.UpdateCredits())
-	handler.NewLabHandlerMentorRequiredWithCreditMiddleware(labMentorAuthRouter, labService)
+	contributorRouter := authRouter.Group("/")
+	contributorRouter.Use(middleware.UpdateCredits())
+	handler.NewLabHandlerContributorRequired(contributorRouter, labService)
 
 	assignmentService := service.NewAssignmentService(repository.NewAssignmentRepository(), labService)
 	handler.NewAssignmentHandler(authRouter, assignmentService)
-	handler.NewAssignmentHandlerMentorRequired(mentorAuthRouter, assignmentService)
+	handler.NewAssignmentHandlerMentorRequired(mentorRouter, assignmentService)
 
 	router.Run()
 }
