@@ -80,7 +80,7 @@ func GetUserPrincipalFromMSALAuthToken(token string) (string, error) {
 	}
 
 	// Decode the token
-	decodedToken, err := base64.StdEncoding.DecodeString(tokenParts[1] + strings.Repeat("=", (4-len(tokenParts[1])%4)%4))
+	decodedToken, err := base64.URLEncoding.DecodeString(tokenParts[1] + strings.Repeat("=", (4-len(tokenParts[1])%4)%4))
 	if err != nil {
 		slog.Error("not able to decode token -> ", err)
 		return "", err
@@ -94,7 +94,7 @@ func GetUserPrincipalFromMSALAuthToken(token string) (string, error) {
 		return "", err
 	}
 
-	userPrincipal, ok := tokenJSON["preferred_username"].(string)
+	userPrincipal, ok := tokenJSON["upn"].(string)
 	if !ok {
 		err := errors.New("user principal name not found in token")
 		slog.Error("user principal name not found in token", err)
