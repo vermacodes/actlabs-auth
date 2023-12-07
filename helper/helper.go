@@ -2,18 +2,22 @@ package helper
 
 import (
 	"actlabs-auth/entity"
+	"context"
 	"crypto/rand"
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
+	"os"
 	"sort"
 	"strings"
 	"time"
 	"unsafe"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/lestrrat-go/jwx/jwk"
 	"golang.org/x/exp/slog"
 )
 
@@ -90,7 +94,7 @@ func GetUserPrincipalFromMSALAuthToken(token string) (string, error) {
 		return "", err
 	}
 
-	userPrincipal, ok := tokenJSON["upn"].(string)
+	userPrincipal, ok := tokenJSON["preferred_username"].(string)
 	if !ok {
 		err := errors.New("user principal name not found in token")
 		slog.Error("user principal name not found in token", err)
@@ -100,41 +104,47 @@ func GetUserPrincipalFromMSALAuthToken(token string) (string, error) {
 	return userPrincipal, nil
 }
 
-// Ensure that the token is issued by AAD.
-func EnsureAADIssuer(tokenString string) (bool, error) {
+func VerifyToken(tokenString string) (bool, error) {
 
-	publicKeyString, err := GetPublicKey(tokenString)
-	if err != nil {
-		return false, err
+	// Drop the Bearer prefix if it exists
+	if strings.HasPrefix(tokenString, "Bearer ") {
+		tokenString = strings.Split(tokenString, "Bearer ")[1]
 	}
 
-	publicKey := "-----BEGIN CERTIFICATE-----\n " + publicKeyString + "\n-----END CERTIFICATE-----"
+	keySet, err := jwk.Fetch(context.TODO(), "https://login.microsoftonline.com/common/discovery/v2.0/keys")
 
-	// Parse the token
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+		if token.Method.Alg() != jwa.RS256.String() {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
-		// Decode public key
-		pubKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(publicKey))
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse public key: %v", err)
+		kid, ok := token.Header["kid"].(string)
+		if !ok {
+			return nil, fmt.Errorf("kid header not found")
 		}
 
-		return pubKey, nil
+		keys, ok := keySet.LookupKeyID(kid)
+		if !ok {
+			return nil, fmt.Errorf("key %v not found", kid)
+		}
 
+		publicKey := &rsa.PublicKey{}
+		err = keys.Raw(publicKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse public key")
+		}
+
+		return publicKey, nil
 	})
 
 	if err != nil {
-		slog.Error("not able to parse token -> ", err)
 		return false, err
 	}
 
-	// Check if the token is valid
 	if !token.Valid {
-		return false, errors.New("invalid token")
+		err := errors.New("token is not valid")
+		slog.Error("token is not valid", err)
+		return false, err
 	}
 
 	// Get the claims from the token
@@ -143,12 +153,21 @@ func EnsureAADIssuer(tokenString string) (bool, error) {
 		return false, errors.New("invalid claims")
 	}
 
+	// check the audience
+	aud, ok := claims["aud"].(string)
+	if !ok {
+		return false, errors.New("invalid audience")
+	}
+	if aud != os.Getenv("AUTH_TOKEN_AUD") {
+		return false, errors.New("invalid audience")
+	}
+
 	// Check the issuer
 	iss, ok := claims["iss"].(string)
 	if !ok {
-		return false, errors.New("invalid issuer")
+		return false, errors.New("not able to get issuer from claims")
 	}
-	if iss != "https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/" {
+	if iss != os.Getenv("AUTH_TOKEN_ISS") {
 		return false, errors.New("invalid issuer")
 	}
 
@@ -162,98 +181,7 @@ func EnsureAADIssuer(tokenString string) (bool, error) {
 	}
 
 	return true, nil
-}
 
-// Get the public key from the well-known endpoint.
-func GetKid(token string) (string, error) {
-
-	// Split the token
-	parts := strings.Split(token, ".")
-	if len(parts) != 3 {
-		return "", errors.New("invalid token")
-	}
-
-	// Decode the header
-	header, err := base64.RawURLEncoding.DecodeString(parts[0])
-	if err != nil {
-		return "", err
-	}
-
-	// Get the kid from the header
-	var headerJSON map[string]interface{}
-	err = json.Unmarshal(header, &headerJSON)
-	if err != nil {
-		return "", err
-	}
-	kid, ok := headerJSON["kid"].(string)
-	if !ok {
-		return "", errors.New("kid not found in token")
-	}
-
-	return kid, nil
-}
-
-// Get the public key from the well-known endpoint.
-func GetPublicKeyFromWellKnown(kid string) (string, error) {
-
-	// Get the well-known endpoint
-	resp, err := http.Get("https://login.microsoftonline.com/common/discovery/keys")
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	// Decode the response
-	var wellKnownJSON map[string]interface{}
-	err = json.NewDecoder(resp.Body).Decode(&wellKnownJSON)
-	if err != nil {
-		return "", err
-	}
-
-	// Get the keys from the response
-	keys, ok := wellKnownJSON["keys"].([]interface{})
-	if !ok {
-		return "", errors.New("keys not found in well-known response")
-	}
-
-	// Find the key with the matching kid
-	for _, key := range keys {
-		keyMap, ok := key.(map[string]interface{})
-		if !ok {
-			return "", errors.New("invalid key")
-		}
-		if keyMap["kid"] == kid {
-			x5c, ok := keyMap["x5c"].([]interface{})
-			if !ok {
-				return "", errors.New("invalid x5c value")
-			}
-			var x5cStrings []string
-			for _, v := range x5c {
-				x5cStrings = append(x5cStrings, v.(string))
-			}
-			return strings.Join(x5cStrings, ""), nil
-		}
-	}
-
-	return "", errors.New("key not found")
-}
-
-// Get the public key from the well-known endpoint.
-func GetPublicKey(token string) (string, error) {
-
-	// Get the kid from the token
-	kid, err := GetKid(token)
-	if err != nil {
-		return "", err
-	}
-
-	// Get the public key from the well-known endpoint
-	publicKey, err := GetPublicKeyFromWellKnown(kid)
-	if err != nil {
-		return "", err
-	}
-
-	return publicKey, nil
 }
 
 // Return today's date in the format yyyy-mm-dd as string

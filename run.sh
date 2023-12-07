@@ -34,6 +34,18 @@ if [[ "${STORAGE_ACCOUNT_NAME}" == "" ]]; then
     exit 1
 fi
 
+# Service principal opject ID
+if [[ "${AUTH_TOKEN_AUD}" == "" ]]; then
+    echo "AUTH_TOKEN_AUD missing"
+    exit 1
+fi
+
+# "https://login.microsoftonline.com/{tenant-id}/v2.0"
+if [[ "${AUTH_TOKEN_ISS}" == "" ]]; then
+    echo "AUTH_TOKEN_ISS missing"
+    exit 1
+fi
+
 echo "Storage Account -> ${STORAGE_ACCOUNT_NAME}"
 
 # Remove existing binary.
