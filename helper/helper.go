@@ -156,10 +156,10 @@ func VerifyToken(tokenString string) (bool, error) {
 	// check the audience
 	aud, ok := claims["aud"].(string)
 	if !ok {
-		return false, errors.New("invalid audience")
+		return false, errors.New("not able to get audience from claims")
 	}
 	if aud != os.Getenv("AUTH_TOKEN_AUD") {
-		return false, errors.New("invalid audience")
+		return false, errors.New("unexpected audience, expected " + os.Getenv("AUTH_TOKEN_AUD") + " but got " + aud)
 	}
 
 	// Check the issuer
@@ -168,7 +168,7 @@ func VerifyToken(tokenString string) (bool, error) {
 		return false, errors.New("not able to get issuer from claims")
 	}
 	if iss != os.Getenv("AUTH_TOKEN_ISS") {
-		return false, errors.New("invalid issuer")
+		return false, errors.New("unexpected issuer, expected " + os.Getenv("AUTH_TOKEN_ISS") + " but got " + iss)
 	}
 
 	// Check the expiration time
