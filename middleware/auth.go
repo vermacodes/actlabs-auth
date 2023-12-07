@@ -28,11 +28,12 @@ func AuthRequired() gin.HandlerFunc {
 		}
 
 		// Ensure that the token is issued by AAD.
-		// isAADToken, err := helper.EnsureAADIssuer(authToken)
-		// if err != nil || !isAADToken {
-		// 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		// 	return
-		// }
+		isAADToken, err := helper.VerifyToken(authToken)
+		if err != nil || !isAADToken {
+			slog.Error("Token is not issued by AAD", err)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
 
 		c.Next()
 	}
@@ -49,11 +50,11 @@ func AdminRequired(authService entity.AuthService) gin.HandlerFunc {
 		authToken = strings.Split(authToken, "Bearer ")[1]
 
 		// Ensure that the token is issued by AAD.
-		// isAADToken, err := helper.EnsureAADIssuer(authToken)
-		// if err != nil || !isAADToken {
-		// 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		// 	return
-		// }
+		isAADToken, err := helper.VerifyToken(authToken)
+		if err != nil || !isAADToken {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
 
 		callingUserPrincipal, err := helper.GetUserPrincipalFromMSALAuthToken(authToken)
 		if err != nil {
@@ -89,11 +90,11 @@ func MentorRequired(authService entity.AuthService) gin.HandlerFunc {
 		authToken = strings.Split(authToken, "Bearer ")[1]
 
 		// Ensure that the token is issued by AAD.
-		// isAADToken, err := helper.EnsureAADIssuer(authToken)
-		// if err != nil || !isAADToken {
-		// 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		// 	return
-		// }
+		isAADToken, err := helper.VerifyToken(authToken)
+		if err != nil || !isAADToken {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
 
 		callingUserPrincipal, err := helper.GetUserPrincipalFromMSALAuthToken(authToken)
 		if err != nil {
