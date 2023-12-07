@@ -5,6 +5,7 @@ import (
 	"actlabs-auth/middleware"
 	"actlabs-auth/repository"
 	"actlabs-auth/service"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -17,10 +18,15 @@ func main() {
 
 	// Get the log level from the environment or default to 8.
 	logLevel := os.Getenv("LOG_LEVEL")
+	fmt.Println("logLevel: ", logLevel)
+
 	logLevelInt, err := strconv.Atoi(logLevel)
 	if err != nil {
+		fmt.Println("Error converting logLevel to int: ", err)
 		logLevelInt = 0
 	}
+
+	fmt.Println("logLevelInt: ", logLevelInt)
 
 	// Create a new logger.
 	opts := slog.HandlerOptions{

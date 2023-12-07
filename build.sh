@@ -34,9 +34,12 @@ echo "Storage Account -> ${STORAGE_ACCOUNT_NAME}"
 go build -ldflags "-X 'actlabs-auth/entity.SasToken=$SAS_TOKEN' -X 'actlabs-auth/entity.StorageAccountName=$STORAGE_ACCOUNT_NAME'"
 
 
-docker build -t actlab.azurecr.io/actlabs-auth .
+docker build -t actlab.azurecr.io/actlabs-auth:${TAG} .
 
 rm actlabs-auth
-docker tag actlabs-auth:${TAG} actlab.azurecr.io/actlabs-auth:${TAG}
+
 az acr login --name actlab --subscription ACT-CSS-Readiness
 docker push actlab.azurecr.io/actlabs-auth:${TAG}
+
+docker tag actlab.azurecr.io/actlabs-auth:${TAG} ashishvermapu/actlabs-auth:${TAG}
+docker push ashishvermapu/actlabs-auth:${TAG}
