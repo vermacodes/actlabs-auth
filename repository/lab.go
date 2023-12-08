@@ -8,8 +8,6 @@ import (
 	"os/exec"
 
 	"actlabs-auth/entity"
-
-	"golang.org/x/exp/slog"
 )
 
 type labRepository struct{}
@@ -60,8 +58,6 @@ func (l *labRepository) GetLab(typeOfLab string, labId string, versionId string)
 	if versionId != "" {
 		url = url + "&versionid=" + versionId
 	}
-
-	slog.Debug("GetLab: " + url)
 
 	resp, err := http.Get(url)
 	if err != nil {
