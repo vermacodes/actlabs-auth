@@ -153,8 +153,8 @@ func (l *labService) DeletePrivateLab(typeOfLab string, labId string, userId str
 	}
 
 	if !ok {
-		slog.Error("Only owner or Admin can delete the lab", nil)
-		return errors.New("only owner or admin can delete the lab")
+		slog.Error("Only owner can delete the lab", nil)
+		return errors.New("only owner can delete the lab")
 	}
 
 	return l.DeleteLab(typeOfLab, labId)
@@ -167,8 +167,8 @@ func (l *labService) DeletePublicLab(typeOfLab string, labId string, userId stri
 	}
 
 	if !ok {
-		slog.Error("Only owner or Admin can delete the lab", nil)
-		return errors.New("only owner or admin can delete the lab")
+		slog.Error("Only owner can delete the lab", nil)
+		return errors.New("only owner can delete the lab")
 	}
 
 	return l.DeleteLab(typeOfLab, labId)
@@ -292,13 +292,15 @@ func (l *labService) ValidateAddingEditorsOrViewers(lab entity.LabType) (bool, e
 		return false, err
 	}
 
-	if len(lab.Owners) == 0 || (len(lab.Owners) == 1 && lab.Owners[0] == "") {
+	if len(existingLab.Owners) == 0 || (len(existingLab.Owners) == 1 && existingLab.Owners[0] == "") {
 		slog.Info("No owners specified. Allowing changes.")
 		return true, nil
 	}
 
 	if !helper.Contains(existingLab.Owners, lab.UpdatedBy) {
 		if !helper.SlicesAreEqual(existingLab.Owners, lab.Owners) || !helper.SlicesAreEqual(existingLab.Editors, lab.Editors) || !helper.SlicesAreEqual(existingLab.Viewers, lab.Viewers) {
+			slog.Debug("Existing Lab: ", existingLab)
+			slog.Debug("New Lab: ", lab)
 			return false, nil
 		}
 	}
@@ -318,7 +320,7 @@ func (l *labService) IsUpsertAllowed(lab entity.LabType) (bool, error) {
 		return false, err
 	}
 
-	if len(lab.Owners) == 0 || (len(lab.Owners) == 1 && lab.Owners[0] == "") {
+	if len(existingLab.Owners) == 0 || (len(existingLab.Owners) == 1 && existingLab.Owners[0] == "") {
 		slog.Info("No owners specified. Allowing changes.")
 		return true, nil
 	}
@@ -338,7 +340,7 @@ func (l *labService) IsDeleteAllowed(typeOfLab string, labId string, userId stri
 	}
 
 	if !helper.Contains(existingLab.Owners, userId) {
-		return false, nil // user not either owner or editor. edit not allowed.
+		return false, nil
 	}
 
 	return true, nil
