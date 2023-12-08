@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"actlabs-auth/entity"
 	"actlabs-auth/helper"
@@ -78,27 +79,7 @@ func (l *labService) GetLabs(typeOfLab string) ([]entity.LabType, error) {
 			slog.Error("not able to get blob from given url", err)
 			continue
 		}
-		// temporary in place to create owners.
 		AddCategoryToLabIfMissing(&lab)
-		// 	if err := l.UpsertLab(lab); err != nil {
-		// 		slog.Error("no able to update lab with category", err)
-		// 	}
-		// }
-		// if len(lab.Owners) == 0 {
-		// 	if lab.CreatedBy != "" {
-		// 		lab.Owners = append(lab.Owners, lab.CreatedBy)
-		// 	}
-		// 	if lab.UpdatedBy != "" {
-		// 		lab.Owners = append(lab.Owners, lab.UpdatedBy)
-		// 	}
-		// 	if lab.CreatedBy == "" && lab.UpdatedBy == "" {
-		// 		lab.Owners = append(lab.Owners, "ashisverma@microsoft.com")
-		// 	}
-		// 	slog.Debug("Updating Owners: " + strings.Join(lab.Owners, ", "))
-		// 	if err := l.UpsertLab(lab); err != nil {
-		// 		slog.Error("not able to add owners to lab", err)
-		// 	}
-		// }
 		slog.Debug("For " + lab.Type + " type, adding lab " + lab.Name + " to list of labs")
 		labs = append(labs, lab)
 	}
@@ -126,8 +107,8 @@ func (l *labService) UpsertPublicLab(lab entity.LabType) error {
 	}
 
 	if !ok {
-		slog.Error(lab.UpdatedBy+" is not either owner or editor which is required to edit the private lab.", nil)
-		return errors.New("user is not either owner or editor which is required to edit the private lab")
+		slog.Error(lab.UpdatedBy+" is not either owner or editor which is required to edit the public lab.", nil)
+		return errors.New("user is not either owner or editor which is required to edit the public lab")
 	}
 	return l.UpsertLab(lab)
 }
@@ -148,7 +129,8 @@ func (l *labService) UpsertLab(lab entity.LabType) error {
 		return errors.New("user is not an owner and there are changes in owners, editors, or viewers")
 	}
 
-	NewLabThings(&lab)
+	l.NewLabThings(&lab)
+	l.AssignOwnerToOrphanLab(&lab)
 
 	val, err := json.Marshal(lab)
 	if err != nil {
@@ -258,11 +240,44 @@ func (l *labService) GetLabVersions(typeOfLab string, labId string) ([]entity.La
 // Helper functions.
 
 // NewLabThings modifies the given lab.
-func NewLabThings(lab *entity.LabType) {
+func (l *labService) NewLabThings(lab *entity.LabType) {
 	if lab.Id == "" {
 		lab.Id = uuid.NewString()
 	}
 	lab.Owners = append(lab.Owners, lab.CreatedBy)
+}
+
+// Orphan Lab needs owner
+func (l *labService) AssignOwnerToOrphanLab(lab *entity.LabType) {
+	if len(lab.Owners) == 0 {
+		if lab.CreatedBy != "" {
+			lab.Owners = append(lab.Owners, lab.CreatedBy)
+		}
+		if lab.UpdatedBy != "" {
+			lab.Owners = append(lab.Owners, lab.UpdatedBy)
+		}
+		if lab.CreatedBy == "" && lab.UpdatedBy == "" {
+			lab.Owners = append(lab.Owners, "ashisverma@microsoft.com")
+			lab.Owners = append(lab.Owners, "ericlucier@microsoft.com")
+		}
+		slog.Debug("Updating Owners: " + strings.Join(lab.Owners, ", "))
+	}
+
+	if len(lab.Owners) == 1 && lab.Owners[0] == "" {
+		lab.Owners = []string{}
+
+		if lab.CreatedBy != "" {
+			lab.Owners = append(lab.Owners, lab.CreatedBy)
+		}
+		if lab.UpdatedBy != "" {
+			lab.Owners = append(lab.Owners, lab.UpdatedBy)
+		}
+		if lab.CreatedBy == "" && lab.UpdatedBy == "" {
+			lab.Owners = append(lab.Owners, "ashisverma@microsoft.com")
+			lab.Owners = append(lab.Owners, "ericlucier@microsoft.com")
+		}
+		slog.Debug("Updating Owners: " + strings.Join(lab.Owners, ", "))
+	}
 }
 
 func (l *labService) ValidateAddingEditorsOrViewers(lab entity.LabType) (bool, error) {
@@ -275,6 +290,11 @@ func (l *labService) ValidateAddingEditorsOrViewers(lab entity.LabType) (bool, e
 	if err != nil {
 		slog.Error("Error getting current version of lab "+lab.Name+" : ", err)
 		return false, err
+	}
+
+	if len(lab.Owners) == 0 || (len(lab.Owners) == 1 && lab.Owners[0] == "") {
+		slog.Info("No owners specified. Allowing changes.")
+		return true, nil
 	}
 
 	if !helper.Contains(existingLab.Owners, lab.UpdatedBy) {
@@ -296,6 +316,11 @@ func (l *labService) IsUpsertAllowed(lab entity.LabType) (bool, error) {
 	if err != nil {
 		slog.Error("Error getting current version of lab "+lab.Name+" : ", err)
 		return false, err
+	}
+
+	if len(lab.Owners) == 0 || (len(lab.Owners) == 1 && lab.Owners[0] == "") {
+		slog.Info("No owners specified. Allowing changes.")
+		return true, nil
 	}
 
 	if !helper.Contains(existingLab.Owners, lab.UpdatedBy) && !helper.Contains(existingLab.Editors, lab.UpdatedBy) {

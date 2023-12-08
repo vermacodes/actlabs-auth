@@ -45,7 +45,7 @@ func ChallengeMiddleware() gin.HandlerFunc {
 		//get challenge from the payload
 		challenges := []entity.Challenge{}
 		if err := c.Bind(&challenges); err != nil {
-			c.Status(http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 

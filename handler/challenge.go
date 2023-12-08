@@ -30,7 +30,7 @@ func NewChallengeHandler(r *gin.RouterGroup, service entity.ChallengeService) {
 func (ch *challengeHandler) GetAllLabsRedacted(c *gin.Context) {
 	labs, err := ch.challengeService.GetAllLabsRedacted()
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.IndentedJSON(http.StatusOK, labs)
@@ -48,7 +48,7 @@ func (ch *challengeHandler) GetMyChallengeLabsRedacted(c *gin.Context) {
 
 	labs, err := ch.challengeService.GetChallengesLabsRedactedByUserId(userId)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.IndentedJSON(http.StatusOK, labs)
@@ -57,7 +57,7 @@ func (ch *challengeHandler) GetMyChallengeLabsRedacted(c *gin.Context) {
 func (ch *challengeHandler) GetAllChallenges(c *gin.Context) {
 	challenges, err := ch.challengeService.GetAllChallenges()
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.IndentedJSON(http.StatusOK, challenges)
@@ -75,7 +75,7 @@ func (ch *challengeHandler) GetMyChallenges(c *gin.Context) {
 
 	challenges, err := ch.challengeService.GetChallengesByUserId(userId)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -88,7 +88,7 @@ func (ch *challengeHandler) GetChallengesByLabId(c *gin.Context) {
 
 	challenges, err := ch.challengeService.GetChallengesByLabId(labId)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -98,7 +98,7 @@ func (ch *challengeHandler) GetChallengesByLabId(c *gin.Context) {
 func (ch *challengeHandler) UpsertChallenges(c *gin.Context) {
 	challenges := []entity.Challenge{}
 	if err := c.BindJSON(&challenges); err != nil {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -116,7 +116,7 @@ func (ch *challengeHandler) DeleteChallenge(c *gin.Context) {
 	challengeIds := []string{challengeId}
 
 	if err := ch.challengeService.DeleteChallenges(challengeIds); err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

@@ -31,11 +31,11 @@ func (l *loggingHandler) OperationRecord(c *gin.Context) {
 
 	var operation entity.Operation
 	if err := c.BindJSON(&operation); err != nil {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	if err := l.loggingService.OperationRecord(operation, userPrincipal); err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.Status(http.StatusCreated)

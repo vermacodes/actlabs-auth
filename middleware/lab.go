@@ -45,7 +45,7 @@ func UpdateCredits() gin.HandlerFunc {
 		// get lab from the payload
 		lab := entity.LabType{}
 		if err := c.Bind(&lab); err != nil {
-			c.Status(http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 

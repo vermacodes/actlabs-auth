@@ -41,7 +41,7 @@ func NewAssignmentHandlerMentorRequired(r *gin.RouterGroup, service entity.Assig
 func (a *assignmentHandler) GetAllAssignments(c *gin.Context) {
 	assignments, err := a.assignmentService.GetAllAssignments()
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -51,7 +51,7 @@ func (a *assignmentHandler) GetAllAssignments(c *gin.Context) {
 func (a *assignmentHandler) GetAllLabsRedacted(c *gin.Context) {
 	labs, err := a.assignmentService.GetAllLabsRedacted()
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.IndentedJSON(http.StatusOK, labs)
@@ -69,7 +69,7 @@ func (a *assignmentHandler) GetMyAssignedLabsRedacted(c *gin.Context) {
 
 	labs, err := a.assignmentService.GetAssignedLabsRedactedByUserId(userId)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -90,7 +90,7 @@ func (a *assignmentHandler) GetAssignedLabsRedactedByUserId(c *gin.Context) {
 
 	labs, err := a.assignmentService.GetAssignedLabsRedactedByUserId(userId)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -101,7 +101,7 @@ func (a *assignmentHandler) GetAssignmentsByLabId(c *gin.Context) {
 	labId := c.Param("labId")
 	assignments, err := a.assignmentService.GetAssignmentsByLabId(labId)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -112,7 +112,7 @@ func (a *assignmentHandler) GetAssignmentsByUserId(c *gin.Context) {
 	userId := c.Param("userId")
 	assignments, err := a.assignmentService.GetAssignmentsByUserId(userId)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -130,7 +130,7 @@ func (a *assignmentHandler) GetMyAssignments(c *gin.Context) {
 
 	assignments, err := a.assignmentService.GetAssignmentsByUserId(userPrincipal)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -140,7 +140,7 @@ func (a *assignmentHandler) GetMyAssignments(c *gin.Context) {
 func (a *assignmentHandler) CreateMyAssignments(c *gin.Context) {
 	bulkAssignment := entity.BulkAssignment{}
 	if err := c.Bind(&bulkAssignment); err != nil {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -155,13 +155,13 @@ func (a *assignmentHandler) CreateMyAssignments(c *gin.Context) {
 	// Sanitizing to make sure that the user is not creating assignments for other users.
 	for _, userId := range bulkAssignment.UserIds {
 		if userId != userPrincipal {
-			c.Status(http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "you can only create assignments for yourself"})
 			return
 		}
 	}
 
 	if err := a.assignmentService.CreateAssignments(bulkAssignment.UserIds, bulkAssignment.LabIds, userPrincipal); err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -171,7 +171,7 @@ func (a *assignmentHandler) CreateMyAssignments(c *gin.Context) {
 func (a *assignmentHandler) CreateAssignments(c *gin.Context) {
 	bulkAssignment := entity.BulkAssignment{}
 	if err := c.Bind(&bulkAssignment); err != nil {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -184,7 +184,7 @@ func (a *assignmentHandler) CreateAssignments(c *gin.Context) {
 	userPrincipal, _ := helper.GetUserPrincipalFromMSALAuthToken(authToken)
 
 	if err := a.assignmentService.CreateAssignments(bulkAssignment.UserIds, bulkAssignment.LabIds, userPrincipal); err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -194,7 +194,7 @@ func (a *assignmentHandler) CreateAssignments(c *gin.Context) {
 func (a *assignmentHandler) DeleteMyAssignments(c *gin.Context) {
 	assignments := []string{}
 	if err := c.Bind(&assignments); err != nil {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -209,13 +209,13 @@ func (a *assignmentHandler) DeleteMyAssignments(c *gin.Context) {
 	// Sanitizing to make sure that the user is not deleting assignments for other users.
 	for _, assignment := range assignments {
 		if !strings.HasPrefix(assignment, userPrincipal) {
-			c.Status(http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "you can only delete your own assignments"})
 			return
 		}
 	}
 
 	if err := a.assignmentService.DeleteAssignments(assignments); err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -225,12 +225,12 @@ func (a *assignmentHandler) DeleteMyAssignments(c *gin.Context) {
 func (a *assignmentHandler) DeleteAssignments(c *gin.Context) {
 	assignments := []string{}
 	if err := c.Bind(&assignments); err != nil {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := a.assignmentService.DeleteAssignments(assignments); err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

@@ -78,7 +78,7 @@ func (l *labHandler) GetLabs(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -88,7 +88,7 @@ func (l *labHandler) GetLabs(c *gin.Context) {
 func (l *labHandler) UpsertLab(c *gin.Context) {
 	lab := entity.LabType{}
 	if err := c.Bind(&lab); err != nil {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -107,7 +107,7 @@ func (l *labHandler) UpsertLab(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -139,7 +139,7 @@ func (l *labHandler) DeleteLab(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -171,7 +171,7 @@ func (l *labHandler) GetLabVersions(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
