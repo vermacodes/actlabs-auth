@@ -243,8 +243,8 @@ func (l *labService) GetLabVersions(typeOfLab string, labId string) ([]entity.La
 func (l *labService) NewLabThings(lab *entity.LabType) {
 	if lab.Id == "" {
 		lab.Id = uuid.NewString()
+		lab.Owners = append(lab.Owners, lab.CreatedBy)
 	}
-	lab.Owners = append(lab.Owners, lab.CreatedBy)
 }
 
 // Orphan Lab needs owner
